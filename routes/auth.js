@@ -6,7 +6,7 @@ const { DatabaseSync: Database } = require('node:sqlite');
 const path = require('path');
 const { verifyToken, SECRET_KEY } = require('../middleware/auth');
 
-const dbPath = path.join(__dirname, '..', 'database', 'edu_crm.db');
+const dbPath = process.env.DB_PATH || path.join(__dirname, '..', 'database', 'edu_crm.db');
 
 router.post('/login', (req, res) => {
   try {

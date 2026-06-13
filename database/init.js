@@ -4,12 +4,12 @@ const fs = require('fs');
 const bcrypt = require('bcryptjs');
 
 function initDB() {
-  const dbDir = path.join(__dirname);
+  const dbPath = process.env.DB_PATH || path.join(__dirname, 'edu_crm.db');
+  const dbDir = path.dirname(dbPath);
   if (!fs.existsSync(dbDir)) {
     fs.mkdirSync(dbDir, { recursive: true });
   }
 
-  const dbPath = path.join(dbDir, 'edu_crm.db');
   const db = new Database(dbPath);
 
   db.exec(`

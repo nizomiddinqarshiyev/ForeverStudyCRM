@@ -5,7 +5,7 @@ const path = require('path');
 const bcrypt = require('bcryptjs');
 const { verifyToken, requireAdmin } = require('../middleware/auth');
 
-const dbPath = path.join(__dirname, '..', 'database', 'edu_crm.db');
+const dbPath = process.env.DB_PATH || path.join(__dirname, '..', 'database', 'edu_crm.db');
 
 // GET /api/users
 router.get('/', verifyToken, (req, res) => {

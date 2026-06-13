@@ -4,7 +4,7 @@ const { DatabaseSync: Database } = require('node:sqlite');
 const path = require('path');
 const { verifyToken } = require('../middleware/auth');
 
-const dbPath = path.join(__dirname, '..', 'database', 'edu_crm.db');
+const dbPath = process.env.DB_PATH || path.join(__dirname, '..', 'database', 'edu_crm.db');
 
 // GET /api/payments
 router.get('/', verifyToken, (req, res) => {
