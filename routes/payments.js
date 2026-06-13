@@ -1,15 +1,11 @@
 const express = require('express');
 const router = express.Router();
-const { DatabaseSync: Database } = require('node:sqlite');
-const path = require('path');
+const db = require('../database/connection');
 const { verifyToken } = require('../middleware/auth');
-
-const dbPath = process.env.DB_PATH || path.join(__dirname, '..', 'database', 'edu_crm.db');
 
 // GET /api/payments
 router.get('/', verifyToken, (req, res) => {
   try {
-    const db = new Database(dbPath);
     let query = `
       SELECT p.*, l.full_name as lead_name, c.name as course_name, u.full_name as created_by_name
       FROM payments p
@@ -26,7 +22,6 @@ router.get('/', verifyToken, (req, res) => {
     query += ' ORDER BY p.created_at DESC';
 
     const payments = db.prepare(query).all(...params);
-    db.close();
 
     res.json({ success: true, data: payments });
   } catch (error) {
@@ -40,8 +35,6 @@ router.post('/', verifyToken, (req, res) => {
     const { lead_id, course_id, amount, method, status, payment_date, due_date, note } = req.body;
     if (!lead_id || !amount) return res.status(400).json({ success: false, error: 'Lead va summa majburiy' });
 
-    const db = new Database(dbPath);
-    
     db.prepare(`
       INSERT INTO payments (lead_id, course_id, amount, method, status, payment_date, due_date, note, created_by)
       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
@@ -55,7 +48,6 @@ router.post('/', verifyToken, (req, res) => {
       VALUES (?, ?, 'payment', ?)
     `).run(lead_id, req.user.id, `To'lov qabul qilindi: ${amount} so'm`);
 
-    db.close();
     res.json({ success: true });
   } catch (error) {
     res.status(500).json({ success: false, error: error.message });

@@ -1,16 +1,11 @@
 const express = require('express');
 const router = express.Router();
-const { DatabaseSync: Database } = require('node:sqlite');
-const path = require('path');
+const db = require('../database/connection');
 const { verifyToken } = require('../middleware/auth');
-
-const dbPath = process.env.DB_PATH || path.join(__dirname, '..', 'database', 'edu_crm.db');
 
 // GET /api/leads/stats
 router.get('/stats', verifyToken, (req, res) => {
   try {
-    const db = new Database(dbPath);
-    
     // Total
     const total = db.prepare('SELECT COUNT(*) as count FROM leads').get().count;
     
@@ -29,8 +24,6 @@ router.get('/stats', verifyToken, (req, res) => {
     // Overdue follow-ups
     const overdue_follow_ups = db.prepare("SELECT COUNT(*) as count FROM leads WHERE next_contact_date < ? AND next_contact_date != '' AND next_contact_date IS NOT NULL").get(todayDate).count;
 
-    db.close();
-
     res.json({
       success: true,
       data: { total, by_stage, today_follow_ups, overdue_follow_ups }
@@ -43,14 +36,12 @@ router.get('/stats', verifyToken, (req, res) => {
 // GET /api/leads/pipeline
 router.get('/pipeline', verifyToken, (req, res) => {
   try {
-    const db = new Database(dbPath);
     const leads = db.prepare(`
       SELECT l.id, l.full_name, l.phone, l.source, l.stage, l.status, l.next_action, l.next_contact_date, c.name as course_name 
       FROM leads l 
       LEFT JOIN courses c ON l.course_id = c.id
       ORDER BY l.updated_at DESC
     `).all();
-    db.close();
 
     const pipeline = {1:[], 2:[], 3:[], 4:[], 5:[], 6:[]};
     leads.forEach(lead => {
@@ -68,7 +59,6 @@ router.get('/pipeline', verifyToken, (req, res) => {
 // GET /api/leads/:id/history
 router.get('/:id/history', verifyToken, (req, res) => {
   try {
-    const db = new Database(dbPath);
     const history = db.prepare(`
       SELECT h.*, u.full_name as user_name 
       FROM lead_history h
@@ -76,7 +66,6 @@ router.get('/:id/history', verifyToken, (req, res) => {
       WHERE h.lead_id = ?
       ORDER BY h.created_at DESC
     `).all(req.params.id);
-    db.close();
 
     res.json({ success: true, data: history });
   } catch (error) {
@@ -87,7 +76,6 @@ router.get('/:id/history', verifyToken, (req, res) => {
 // GET /api/leads/:id
 router.get('/:id', verifyToken, (req, res) => {
   try {
-    const db = new Database(dbPath);
     const lead = db.prepare(`
       SELECT l.*, c.name as course_name, u.full_name as manager_name
       FROM leads l
@@ -95,7 +83,6 @@ router.get('/:id', verifyToken, (req, res) => {
       LEFT JOIN users u ON l.manager_id = u.id
       WHERE l.id = ?
     `).get(req.params.id);
-    db.close();
 
     if (!lead) return res.status(404).json({ success: false, error: 'Lead topilmadi' });
     res.json({ success: true, data: lead });
@@ -107,7 +94,6 @@ router.get('/:id', verifyToken, (req, res) => {
 // GET /api/leads
 router.get('/', verifyToken, (req, res) => {
   try {
-    const db = new Database(dbPath);
     let query = `
       SELECT l.*, c.name as course_name, u.full_name as manager_name
       FROM leads l
@@ -178,8 +164,6 @@ router.get('/', verifyToken, (req, res) => {
 
     const total = db.prepare(countQuery).get(...countParams).count;
 
-    db.close();
-
     res.json({
       success: true,
       data: leads,
@@ -204,7 +188,6 @@ router.post('/', verifyToken, (req, res) => {
       return res.status(400).json({ success: false, error: 'Ism va telefon raqam majburiy' });
     }
 
-    const db = new Database(dbPath);
     const insert = db.prepare(`
       INSERT INTO leads (full_name, phone, telegram, source, course_id, manager_id, notes, next_action, next_contact_date, age, inquiry_for, address)
       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
@@ -230,7 +213,6 @@ router.post('/', verifyToken, (req, res) => {
       VALUES (?, ?, 1, 'Yangi lead', 'status_change', 'Yaratildi')
     `).run(result.lastInsertRowid, req.user.id);
 
-    db.close();
     res.json({ success: true, data: { id: result.lastInsertRowid } });
   } catch (error) {
     res.status(500).json({ success: false, error: error.message });
@@ -242,12 +224,9 @@ router.put('/:id', verifyToken, (req, res) => {
   try {
     const { full_name, phone, telegram, source, course_id, manager_id, notes, next_action, next_contact_date, age, inquiry_for, address, stage, status } = req.body;
     
-    const db = new Database(dbPath);
-    
     // Get old lead details for history check
     const oldLead = db.prepare('SELECT stage, status FROM leads WHERE id = ?').get(req.params.id);
     if (!oldLead) {
-      db.close();
       return res.status(404).json({ success: false, error: 'Lead topilmadi' });
     }
 
@@ -308,7 +287,6 @@ router.put('/:id', verifyToken, (req, res) => {
       );
     }
 
-    db.close();
     res.json({ success: true });
   } catch (error) {
     res.status(500).json({ success: false, error: error.message });
@@ -323,11 +301,8 @@ router.put('/:id/stage', verifyToken, (req, res) => {
       return res.status(400).json({ success: false, error: 'Bosqich va holat majburiy' });
     }
 
-    const db = new Database(dbPath);
-    
     const oldLead = db.prepare('SELECT stage, status FROM leads WHERE id = ?').get(req.params.id);
     if (!oldLead) {
-      db.close();
       return res.status(404).json({ success: false, error: 'Lead topilmadi' });
     }
 
@@ -346,7 +321,6 @@ router.put('/:id/stage', verifyToken, (req, res) => {
       VALUES (?, ?, ?, ?, ?, ?, 'status_change', ?)
     `).run(req.params.id, req.user.id, oldLead.stage, oldLead.status, stage, status, comment || '');
 
-    db.close();
     res.json({ success: true });
   } catch (error) {
     res.status(500).json({ success: false, error: error.message });
@@ -358,7 +332,6 @@ router.post('/:id/action', verifyToken, (req, res) => {
   try {
     const { action_type, comment } = req.body;
     
-    const db = new Database(dbPath);
     db.prepare(`
       INSERT INTO lead_history (lead_id, user_id, action_type, comment)
       VALUES (?, ?, ?, ?)
@@ -366,7 +339,6 @@ router.post('/:id/action', verifyToken, (req, res) => {
 
     db.prepare("UPDATE leads SET updated_at = datetime('now'), last_contact_date = datetime('now') WHERE id = ?").run(req.params.id);
 
-    db.close();
     res.json({ success: true });
   } catch (error) {
     res.status(500).json({ success: false, error: error.message });
@@ -376,11 +348,9 @@ router.post('/:id/action', verifyToken, (req, res) => {
 // DELETE /api/leads/:id
 router.delete('/:id', verifyToken, (req, res) => {
   try {
-    const db = new Database(dbPath);
     db.prepare('DELETE FROM lead_history WHERE lead_id = ?').run(req.params.id);
     db.prepare('DELETE FROM payments WHERE lead_id = ?').run(req.params.id);
     db.prepare('DELETE FROM leads WHERE id = ?').run(req.params.id);
-    db.close();
     
     res.json({ success: true });
   } catch (error) {
@@ -397,8 +367,6 @@ router.post('/public', (req, res) => {
       return res.status(400).json({ success: false, error: 'Ism va telefon raqam majburiy' });
     }
 
-    const db = new Database(dbPath);
-    
     // Find first active admin/manager to assign as manager
     const manager = db.prepare("SELECT id FROM users WHERE role = 'admin' OR role = 'manager' LIMIT 1").get();
     const managerId = manager ? manager.id : 1;
@@ -421,7 +389,6 @@ router.post('/public', (req, res) => {
       VALUES (?, ?, 1, 'Yangi lead', 'status_change', 'Saytdan ro''yxatdan o''tdi')
     `).run(result.lastInsertRowid, managerId);
 
-    db.close();
     res.json({ success: true, message: "Ro'yxatdan muvaffaqiyatli o'tdingiz!" });
   } catch (error) {
     res.status(500).json({ success: false, error: error.message });

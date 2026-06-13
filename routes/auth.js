@@ -2,11 +2,8 @@ const express = require('express');
 const router = express.Router();
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
-const { DatabaseSync: Database } = require('node:sqlite');
-const path = require('path');
+const db = require('../database/connection');
 const { verifyToken, SECRET_KEY } = require('../middleware/auth');
-
-const dbPath = process.env.DB_PATH || path.join(__dirname, '..', 'database', 'edu_crm.db');
 
 router.post('/login', (req, res) => {
   try {
@@ -15,9 +12,7 @@ router.post('/login', (req, res) => {
       return res.status(400).json({ success: false, error: 'Login va parolni kiriting' });
     }
 
-    const db = new Database(dbPath);
     const user = db.prepare('SELECT * FROM users WHERE username = ? AND is_active = 1').get(username);
-    db.close();
 
     if (!user) {
       return res.status(401).json({ success: false, error: 'Login yoki parol xato' });
@@ -53,9 +48,7 @@ router.post('/login', (req, res) => {
 
 router.get('/me', verifyToken, (req, res) => {
   try {
-    const db = new Database(dbPath);
     const user = db.prepare('SELECT id, username, full_name, role, is_active FROM users WHERE id = ?').get(req.user.id);
-    db.close();
 
     if (!user) {
       console.error("/me failed: User not found for id", req.user.id);

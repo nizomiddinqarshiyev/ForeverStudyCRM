@@ -1,15 +1,11 @@
 const express = require('express');
 const router = express.Router();
-const { DatabaseSync: Database } = require('node:sqlite');
-const path = require('path');
+const db = require('../database/connection');
 const { verifyToken } = require('../middleware/auth');
-
-const dbPath = process.env.DB_PATH || path.join(__dirname, '..', 'database', 'edu_crm.db');
 
 // GET /api/courses
 router.get('/', verifyToken, (req, res) => {
   try {
-    const db = new Database(dbPath);
     const courses = db.prepare(`
       SELECT c.*, COUNT(l.id) as lead_count 
       FROM courses c
@@ -17,7 +13,6 @@ router.get('/', verifyToken, (req, res) => {
       WHERE c.is_active = 1
       GROUP BY c.id
     `).all();
-    db.close();
 
     res.json({ success: true, data: courses });
   } catch (error) {
@@ -31,9 +26,7 @@ router.post('/', verifyToken, (req, res) => {
     const { name, description, price } = req.body;
     if (!name) return res.status(400).json({ success: false, error: 'Kurs nomi majburiy' });
 
-    const db = new Database(dbPath);
     const result = db.prepare('INSERT INTO courses (name, description, price) VALUES (?, ?, ?)').run(name, description || '', price || 0);
-    db.close();
 
     res.json({ success: true, data: { id: result.lastInsertRowid } });
   } catch (error) {
@@ -45,9 +38,7 @@ router.post('/', verifyToken, (req, res) => {
 router.put('/:id', verifyToken, (req, res) => {
   try {
     const { name, description, price } = req.body;
-    const db = new Database(dbPath);
     db.prepare('UPDATE courses SET name = COALESCE(?, name), description = COALESCE(?, description), price = COALESCE(?, price) WHERE id = ?').run(name, description, price, req.params.id);
-    db.close();
     
     res.json({ success: true });
   } catch (error) {
@@ -58,9 +49,7 @@ router.put('/:id', verifyToken, (req, res) => {
 // DELETE /api/courses/:id
 router.delete('/:id', verifyToken, (req, res) => {
   try {
-    const db = new Database(dbPath);
     db.prepare('UPDATE courses SET is_active = 0 WHERE id = ?').run(req.params.id);
-    db.close();
     
     res.json({ success: true });
   } catch (error) {
@@ -71,9 +60,7 @@ router.delete('/:id', verifyToken, (req, res) => {
 // GET /api/courses/public (Public active courses list for landing page)
 router.get('/public', (req, res) => {
   try {
-    const db = new Database(dbPath);
     const courses = db.prepare('SELECT id, name, price FROM courses WHERE is_active = 1').all();
-    db.close();
 
     res.json({ success: true, data: courses });
   } catch (error) {

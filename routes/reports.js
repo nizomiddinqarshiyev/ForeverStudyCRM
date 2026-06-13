@@ -1,19 +1,14 @@
 const express = require('express');
 const router = express.Router();
-const { DatabaseSync: Database } = require('node:sqlite');
-const path = require('path');
+const db = require('../database/connection');
 const { verifyToken } = require('../middleware/auth');
-
-const dbPath = process.env.DB_PATH || path.join(__dirname, '..', 'database', 'edu_crm.db');
 
 // GET /api/reports/funnel
 router.get('/funnel', verifyToken, (req, res) => {
   try {
-    const db = new Database(dbPath);
     // Approximate funnel: Count leads currently in each stage, plus those who passed through it
     // For simplicity, we just return current leads in each stage and compute conversion assuming stage 1 -> 6
     const stages = db.prepare('SELECT stage, COUNT(*) as count FROM leads GROUP BY stage ORDER BY stage ASC').all();
-    db.close();
 
     let total = 0;
     stages.forEach(s => total += s.count);
@@ -39,7 +34,6 @@ router.get('/funnel', verifyToken, (req, res) => {
 // GET /api/reports/managers
 router.get('/managers', verifyToken, (req, res) => {
   try {
-    const db = new Database(dbPath);
     const data = db.prepare(`
       SELECT u.id, u.full_name as manager_name,
              COUNT(l.id) as total_leads,
@@ -49,7 +43,6 @@ router.get('/managers', verifyToken, (req, res) => {
       WHERE u.is_active = 1
       GROUP BY u.id
     `).all();
-    db.close();
 
     data.forEach(d => {
       d.conversion_rate = d.total_leads > 0 ? Math.round((d.won_leads / d.total_leads) * 100) : 0;
@@ -64,14 +57,12 @@ router.get('/managers', verifyToken, (req, res) => {
 // GET /api/reports/sources
 router.get('/sources', verifyToken, (req, res) => {
   try {
-    const db = new Database(dbPath);
     const data = db.prepare(`
       SELECT source, COUNT(*) as count,
              SUM(CASE WHEN stage IN (5, 6) THEN 1 ELSE 0 END) as won_leads
       FROM leads
       GROUP BY source
     `).all();
-    db.close();
 
     data.forEach(d => {
       d.conversion_rate = d.count > 0 ? Math.round((d.won_leads / d.count) * 100) : 0;
