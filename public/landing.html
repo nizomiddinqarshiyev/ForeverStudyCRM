@@ -1,0 +1,757 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>KR EDU - Koreys tili o'quv markazi</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --primary: #6c5ce7;
+      --primary-light: #a855f7;
+      --bg: #0b0b1a;
+      --bg-card: rgba(255, 255, 255, 0.03);
+      --border: rgba(255, 255, 255, 0.08);
+      --text: #e8e8e8;
+      --text-muted: #8888aa;
+      --radius: 16px;
+      --transition: all 0.3s ease;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      background-color: var(--bg);
+      color: var(--text);
+      overflow-x: hidden;
+      line-height: 1.6;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0 24px;
+    }
+
+    /* Header */
+    header {
+      padding: 20px 0;
+      border-bottom: 1px solid var(--border);
+      position: sticky;
+      top: 0;
+      background: rgba(11, 11, 26, 0.85);
+      backdrop-filter: blur(12px);
+      z-index: 100;
+    }
+
+    .header-flex {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .logo {
+      font-family: 'Outfit', sans-serif;
+      font-size: 28px;
+      font-weight: 800;
+      background: linear-gradient(to right, #74b9ff, var(--primary-light));
+      -webkit-background-clip: text;
+      color: transparent;
+    }
+
+    .nav-links {
+      display: flex;
+      gap: 28px;
+      align-items: center;
+    }
+
+    .nav-links a {
+      color: var(--text-muted);
+      text-decoration: none;
+      font-weight: 500;
+      font-size: 15px;
+      transition: var(--transition);
+    }
+
+    .nav-links a:hover {
+      color: #fff;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 12px 24px;
+      border-radius: var(--radius);
+      font-weight: 600;
+      text-decoration: none;
+      cursor: pointer;
+      transition: var(--transition);
+      border: none;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, var(--primary), var(--primary-light));
+      color: #fff;
+    }
+
+    .btn-primary:hover {
+      box-shadow: 0 8px 25px rgba(108, 92, 231, 0.4);
+      transform: translateY(-2px);
+    }
+
+    .btn-secondary {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      color: var(--text);
+    }
+
+    .btn-secondary:hover {
+      background: rgba(255, 255, 255, 0.08);
+      border-color: rgba(255, 255, 255, 0.2);
+    }
+
+    /* Hero Section */
+    .hero {
+      padding: 80px 0;
+      display: grid;
+      grid-template-columns: 1.1fr 0.9fr;
+      gap: 48px;
+      align-items: center;
+    }
+
+    @media (max-width: 900px) {
+      .hero {
+        grid-template-columns: 1fr;
+        text-align: center;
+        padding: 40px 0 60px;
+      }
+      .hero-form-container {
+        margin: 0 auto;
+      }
+      .nav-links {
+        display: none;
+      }
+    }
+
+    .hero-content h1 {
+      font-family: 'Outfit', sans-serif;
+      font-size: 56px;
+      font-weight: 800;
+      line-height: 1.1;
+      margin-bottom: 24px;
+      background: linear-gradient(135deg, #ffffff 40%, #a855f7 100%);
+      -webkit-background-clip: text;
+      color: transparent;
+    }
+
+    .hero-content p {
+      font-size: 18px;
+      color: var(--text-muted);
+      margin-bottom: 32px;
+    }
+
+    /* Form Card */
+    .hero-form-container {
+      width: 100%;
+      max-width: 480px;
+    }
+
+    .form-card {
+      background: rgba(25, 25, 50, 0.45);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 32px;
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+      backdrop-filter: blur(20px);
+      border-top: 4px solid var(--primary);
+    }
+
+    .form-card h3 {
+      font-family: 'Outfit', sans-serif;
+      font-size: 24px;
+      font-weight: 700;
+      margin-bottom: 8px;
+      text-align: center;
+    }
+
+    .form-card p {
+      font-size: 14px;
+      color: var(--text-muted);
+      margin-bottom: 24px;
+      text-align: center;
+    }
+
+    .form-group {
+      margin-bottom: 20px;
+    }
+
+    .form-group label {
+      display: block;
+      margin-bottom: 8px;
+      font-size: 13px;
+      color: var(--text-muted);
+      font-weight: 500;
+    }
+
+    .form-control {
+      width: 100%;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 14px 16px;
+      color: var(--text);
+      outline: none;
+      transition: var(--transition);
+      font-size: 15px;
+    }
+
+    .form-control:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(108, 92, 231, 0.2);
+    }
+
+    select.form-control {
+      appearance: none;
+      background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%238888aa' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+      background-repeat: no-repeat;
+      background-position: right 1rem center;
+      background-size: 1em;
+    }
+    select.form-control option {
+      background: #0b0b1a;
+      color: #fff;
+    }
+
+    /* Stats Section */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 24px;
+      margin: 40px 0 80px;
+    }
+    .stat-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 24px;
+      text-align: center;
+      transition: var(--transition);
+    }
+    .stat-card:hover {
+      transform: translateY(-5px);
+      border-color: var(--primary);
+      background: rgba(255, 255, 255, 0.05);
+    }
+    .stat-num {
+      font-size: 36px;
+      font-weight: 800;
+      color: var(--primary-light);
+      margin-bottom: 8px;
+    }
+    .stat-label {
+      font-size: 14px;
+      color: var(--text-muted);
+    }
+
+    /* Section Headers */
+    .section-title {
+      font-family: 'Outfit', sans-serif;
+      font-size: 36px;
+      font-weight: 800;
+      text-align: center;
+      margin-bottom: 16px;
+      background: linear-gradient(135deg, #ffffff 50%, #a855f7 100%);
+      -webkit-background-clip: text;
+      color: transparent;
+      margin-top: 20px;
+    }
+    .section-subtitle {
+      font-size: 16px;
+      color: var(--text-muted);
+      text-align: center;
+      max-width: 600px;
+      margin: 0 auto 48px;
+    }
+
+    /* Courses Section */
+    .courses-section {
+      padding: 60px 0;
+    }
+    .courses-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+      gap: 32px;
+      margin-bottom: 80px;
+    }
+    .course-card {
+      background: rgba(25, 25, 50, 0.3);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 32px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      transition: var(--transition);
+      position: relative;
+      overflow: hidden;
+    }
+    .course-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 4px;
+      background: linear-gradient(90deg, var(--primary), var(--primary-light));
+      opacity: 0;
+      transition: var(--transition);
+    }
+    .course-card:hover::before {
+      opacity: 1;
+    }
+    .course-card:hover {
+      transform: translateY(-8px);
+      border-color: rgba(108, 92, 231, 0.3);
+      box-shadow: 0 15px 30px rgba(108, 92, 231, 0.1);
+    }
+    .course-tag {
+      display: inline-block;
+      padding: 6px 12px;
+      background: rgba(108, 92, 231, 0.15);
+      color: #a855f7;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 600;
+      margin-bottom: 20px;
+      align-self: flex-start;
+    }
+    .course-title {
+      font-size: 22px;
+      font-weight: 700;
+      margin-bottom: 12px;
+    }
+    .course-desc {
+      color: var(--text-muted);
+      font-size: 15px;
+      margin-bottom: 24px;
+      flex-grow: 1;
+    }
+    .course-price {
+      font-size: 24px;
+      font-weight: 800;
+      color: #fff;
+      margin-bottom: 20px;
+    }
+    .course-price span {
+      font-size: 14px;
+      color: var(--text-muted);
+      font-weight: 400;
+    }
+
+    /* Features Section */
+    .features-section {
+      padding: 60px 0;
+    }
+    .features-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 32px;
+      margin-bottom: 80px;
+    }
+    .feature-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 32px;
+      transition: var(--transition);
+    }
+    .feature-card:hover {
+      border-color: var(--primary-light);
+      transform: scale(1.02);
+      background: rgba(255, 255, 255, 0.05);
+    }
+    .feature-icon {
+      font-size: 32px;
+      color: var(--primary-light);
+      margin-bottom: 20px;
+    }
+    .feature-title {
+      font-size: 20px;
+      font-weight: 700;
+      margin-bottom: 12px;
+    }
+    .feature-desc {
+      color: var(--text-muted);
+      font-size: 14px;
+    }
+
+    /* FAQ Section */
+    .faq-section {
+      padding: 60px 0 100px;
+    }
+    .faq-grid {
+      max-width: 800px;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+    .faq-item {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 24px;
+      cursor: pointer;
+      transition: var(--transition);
+    }
+    .faq-item:hover {
+      border-color: var(--primary);
+    }
+    .faq-question {
+      font-size: 16px;
+      font-weight: 600;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .faq-answer {
+      margin-top: 12px;
+      color: var(--text-muted);
+      font-size: 14px;
+      display: none;
+      line-height: 1.6;
+    }
+    .faq-item.active .faq-answer {
+      display: block;
+    }
+    .faq-item.active {
+      border-color: var(--primary);
+      background: rgba(108, 92, 231, 0.05);
+    }
+
+    /* Toast Notification */
+    .toast {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      background: #12122a;
+      border-left: 4px solid #00d4aa;
+      padding: 16px 24px;
+      border-radius: 8px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      z-index: 1000;
+      opacity: 0;
+      transform: translateY(20px);
+      pointer-events: none;
+      transition: all 0.3s ease;
+    }
+
+    .toast.active {
+      opacity: 1;
+      transform: translateY(0);
+      pointer-events: auto;
+    }
+
+    /* Footer */
+    footer {
+      border-top: 1px solid var(--border);
+      padding: 40px 0;
+      background: #060612;
+      text-align: center;
+      color: var(--text-muted);
+      font-size: 14px;
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <div class="container header-flex">
+      <div class="logo">KR EDU</div>
+      <div class="nav-links">
+        <a href="#courses">Kurslar</a>
+        <a href="#register">Ro'yxatdan o'tish</a>
+        <a href="/crm" class="btn btn-secondary">CRMga kirish</a>
+      </div>
+    </div>
+  </header>
+
+  <main class="container">
+    <!-- Hero Section -->
+    <section class="hero">
+      <div class="hero-content">
+        <h1>Koreys tilini professional o'rganing!</h1>
+        <p>Bizning markazda sifatli ta'lim, individual yondashuv va qisqa muddatda natijaga erishish kafolatlanadi. Bugunoq ro'yxatdan o'ting va darslarimizga qo'shiling!</p>
+        <a href="#register" class="btn btn-primary" style="padding: 16px 32px; font-size: 16px;">Kursga yozilish</a>
+      </div>
+
+      <div class="hero-form-container" id="register">
+        <div class="form-card">
+          <h3>Bepul darsga yozilish</h3>
+          <p>Ma'lumotlaringizni qoldiring va biz siz bilan bog'lanamiz</p>
+          
+          <form id="regForm" onsubmit="submitForm(event)">
+            <div class="form-group">
+              <label>Ismingiz (F.I.Sh)</label>
+              <input type="text" id="name" class="form-control" placeholder="Ismingizni kiriting" required>
+            </div>
+            
+            <div class="form-group">
+              <label>Telefon raqamingiz</label>
+              <input type="text" id="phone" class="form-control" value="+998" placeholder="+998" required>
+            </div>
+
+            <div class="form-group">
+              <label>Yoshingiz</label>
+              <input type="number" id="age" class="form-control" placeholder="Yoshingizni kiriting" min="5" max="100" required>
+            </div>
+
+            <div class="form-group">
+              <label>Qaysi kursda o'qimoqchisiz?</label>
+              <select id="course" class="form-control" required>
+                <option value="">Kursni tanlang</option>
+              </select>
+            </div>
+
+            <button type="submit" class="btn btn-primary" style="width: 100%; padding: 14px; font-size: 15px;">Ro'yxatdan o'tish</button>
+          </form>
+        </div>
+      </div>
+    </section>
+
+    <!-- Stats Section -->
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-num">5+</div>
+        <div class="stat-label">Yillik tajriba</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-num">1,200+</div>
+        <div class="stat-label">Muvaffaqiyatli talabalar</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-num">95%</div>
+        <div class="stat-label">TOPIK natijadorlik</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-num">10+</div>
+        <div class="stat-label">Professional o'qituvchilar</div>
+      </div>
+    </div>
+
+    <!-- Courses Section -->
+    <section class="courses-section" id="courses">
+      <h2 class="section-title">Bizning Kurslar</h2>
+      <p class="section-subtitle">Har qanday darajadagi talabalar uchun maxsus ishlab chiqilgan o'quv dasturlari</p>
+      <div class="courses-grid" id="coursesGrid">
+        <div style="grid-column: 1/-1; text-align: center; color: var(--text-muted);">Kurslar yuklanmoqda...</div>
+      </div>
+    </section>
+
+    <!-- Features Section -->
+    <section class="features-section">
+      <h2 class="section-title">Nega aynan biz?</h2>
+      <p class="section-subtitle">Biz talabalarimizga eng yuqori sifatli va zamonaviy sharoitlarda ta'lim beramiz</p>
+      
+      <div class="features-grid">
+        <div class="feature-card">
+          <div class="feature-icon">👨‍🏫</div>
+          <div class="feature-title">Malakali Ustozlar</div>
+          <div class="feature-desc">Janubiy Koreyada tahsil olgan va TOPIK 6 darajaga ega bo'lgan tajribali o'qituvchilar.</div>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">📚</div>
+          <div class="feature-title">Bepul Materiallar</div>
+          <div class="feature-desc">Dars jarayonida barcha o'quv qo'llanmalari, kitoblar va audio materiallar bepul taqdim etiladi.</div>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">📝</div>
+          <div class="feature-title">Mock TOPIK testlari</div>
+          <div class="feature-desc">Har haftalik nazorat va haqiqiy imtihon muhitini his qilish uchun Mock TOPIK testlari.</div>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">🏫</div>
+          <div class="feature-title">Zamonaviy xonalar</div>
+          <div class="feature-desc">Shinam xonalar, proektorlar va multimedia vositalari bilan jihozlangan o'quv muhiti.</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- FAQ Section -->
+    <section class="faq-section">
+      <h2 class="section-title">Ko'p beriladigan savollar</h2>
+      <p class="section-subtitle">O'quvchilarimiz tomonidan eng tez-tez so'raladigan savollarga javoblar</p>
+      
+      <div class="faq-grid">
+        <div class="faq-item" onclick="toggleFaq(this)">
+          <div class="faq-question">
+            <span>Darslar haftada necha marta va necha soatdan bo'ladi?</span>
+            <span>+</span>
+          </div>
+          <div class="faq-answer">
+            Darslar haftada 3 marta, har bir dars 2 soat (120 daqiqa) davom etadi. Shuningdek, qo'shimcha amaliyot darslari va mock testlari ham tashkil etiladi.
+          </div>
+        </div>
+        
+        <div class="faq-item" onclick="toggleFaq(this)">
+          <div class="faq-question">
+            <span>Boshlang'ich darajadan Koreyada o'qish darajasiga yetish uchun qancha vaqt ketadi?</span>
+            <span>+</span>
+          </div>
+          <div class="faq-answer">
+            O'rtacha 6-8 oy davomida muntazam o'qish orqali TOPIK 3 yoki 4 darajasini olishingiz va Koreya universitetlariga hujjat topshirish huquqiga ega bo'lishingiz mumkin.
+          </div>
+        </div>
+
+        <div class="faq-item" onclick="toggleFaq(this)">
+          <div class="faq-question">
+            <span>To'lovlarni qanday usullarda amalga oshirish mumkin?</span>
+            <span>+</span>
+          </div>
+          <div class="faq-answer">
+            To'lovlarni naqd pul, Click/Payme ilovalari orqali yoki bank o'tkazmasi orqali amalga oshirishingiz mumkin.
+          </div>
+        </div>
+
+        <div class="faq-item" onclick="toggleFaq(this)">
+          <div class="faq-question">
+            <span>Birinchi darsda qatnashib ko'rish bepulmi?</span>
+            <span>+</span>
+          </div>
+          <div class="faq-answer">
+            Ha, birinchi darsimiz bepul sinov darsi hisoblanadi. Unda qatnashib, o'qitish metodikasi va sharoitlar bilan tanishishingiz mumkin.
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <div class="container">
+      <p>&copy; 2026 KR EDU - Koreys tili o'quv markazi. Barcha huquqlar himoyalangan.</p>
+    </div>
+  </footer>
+
+  <div id="toast" class="toast">
+    <span id="toast-msg">Muvaffaqiyatli ro'yxatdan o'tdingiz!</span>
+  </div>
+
+  <script>
+    // Load courses list from public API on load
+    document.addEventListener('DOMContentLoaded', async () => {
+      try {
+        const res = await fetch('/api/courses/public');
+        const json = await res.json();
+        if (json.success) {
+          const select = document.getElementById('course');
+          const grid = document.getElementById('coursesGrid');
+          grid.innerHTML = ''; // Clear loading placeholder
+          
+          json.data.forEach(c => {
+            // Populate select option
+            const opt = document.createElement('option');
+            opt.value = c.id;
+            opt.textContent = `${c.name} - (${c.price.toLocaleString('uz-UZ')} UZS)`;
+            select.appendChild(opt);
+
+            // Create course card
+            const card = document.createElement('div');
+            card.className = 'course-card';
+            
+            let tagText = "Koreys tili";
+            if (c.name.toLowerCase().includes("topik")) tagText = "Imtihon";
+            else if (c.name.toLowerCase().includes("intensiv")) tagText = "Tezkor";
+            else if (c.name.toLowerCase().includes("boshlang'ich") || c.name.toLowerCase().includes("a1")) tagText = "A1 Daraja";
+            else if (c.name.toLowerCase().includes("o'rta") || c.name.toLowerCase().includes("a2")) tagText = "A2-B1 Daraja";
+
+            card.innerHTML = `
+              <div>
+                <span class="course-tag">${tagText}</span>
+                <h3 class="course-title">${c.name}</h3>
+                <p class="course-desc">Sifatli ta'lim va chuqurlashtirilgan o'qitish dasturi yordamida qisqa muddatda natijaga erishing.</p>
+              </div>
+              <div>
+                <div class="course-price">${c.price.toLocaleString('uz-UZ')} <span>UZS / oy</span></div>
+                <button onclick="selectCourse(${c.id})" class="btn btn-primary" style="width: 100%;">Yozilish</button>
+              </div>
+            `;
+            grid.appendChild(card);
+          });
+        }
+      } catch (err) {
+        console.error("Kurslarni yuklashda xatolik:", err);
+      }
+    });
+
+    function selectCourse(courseId) {
+      const select = document.getElementById('course');
+      select.value = courseId;
+      document.getElementById('register').scrollIntoView({ behavior: 'smooth' });
+      document.getElementById('name').focus();
+    }
+
+    function toggleFaq(element) {
+      element.classList.toggle('active');
+      const span = element.querySelector('.faq-question span:last-child');
+      if (element.classList.contains('active')) {
+        span.textContent = '-';
+      } else {
+        span.textContent = '+';
+      }
+    }
+
+    // Submit form
+    async function submitForm(e) {
+      e.preventDefault();
+      
+      const full_name = document.getElementById('name').value;
+      const phone = document.getElementById('phone').value;
+      const age = document.getElementById('age').value;
+      const course_id = document.getElementById('course').value;
+
+      try {
+        const res = await fetch('/api/leads/public', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ full_name, phone, age, course_id })
+        });
+        const json = await res.json();
+
+        if (json.success) {
+          showToast(json.message || "Ro'yxatdan muvaffaqiyatli o'tdingiz!", true);
+          document.getElementById('regForm').reset();
+          document.getElementById('phone').value = "+998";
+        } else {
+          showToast(json.error || "Xatolik yuz berdi", false);
+        }
+      } catch (err) {
+        showToast("Server bilan bog'lanishda xatolik", false);
+      }
+    }
+
+    function showToast(msg, isSuccess) {
+      const toast = document.getElementById('toast');
+      const toastMsg = document.getElementById('toast-msg');
+      toastMsg.textContent = msg;
+      
+      if (isSuccess) {
+        toast.style.borderLeftColor = "#00d4aa";
+      } else {
+        toast.style.borderLeftColor = "#ff4757";
+      }
+
+      toast.classList.add('active');
+      setTimeout(() => {
+        toast.classList.remove('active');
+      }, 4000);
+    }
+  </script>
+</body>
+</html>
