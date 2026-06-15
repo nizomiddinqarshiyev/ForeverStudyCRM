@@ -2,6 +2,7 @@
 window.CalendarPage = {
   currentDate: new Date(),
   leads: [],
+  allLeads: [],
 
   async render(container) {
     container.innerHTML = `
@@ -39,7 +40,8 @@ window.CalendarPage = {
   async loadData() {
     try {
       const res = await API.get('/leads?limit=1000');
-      this.leads = (res.data || []).filter(l => l.next_contact_date);
+      this.allLeads = res.data || [];
+      this.leads = this.allLeads.filter(l => l.next_contact_date);
       this.drawCalendar();
     } catch (e) {
       Toast.error("Kalendar ma'lumotlarini yuklashda xatolik");
@@ -110,7 +112,8 @@ window.CalendarPage = {
       const isToday = cellDateStr === todayStr;
       const todayStyle = isToday ? 'border: 2px solid var(--primary); background: rgba(108, 92, 231, 0.04);' : 'background: rgba(255,255,255,0.02); border: 1px solid var(--border);';
       
-      cell.style = `border-radius: var(--radius-sm); padding: 10px; min-height: 100px; display: flex; flex-direction: column; transition: var(--transition); ${todayStyle}`;
+      cell.style = `border-radius: var(--radius-sm); padding: 10px; min-height: 100px; display: flex; flex-direction: column; transition: var(--transition); cursor: pointer; ${todayStyle}`;
+      cell.onclick = () => CalendarPage.showDayModal(cellDateStr);
       cell.onmouseover = () => { cell.style.borderColor = 'var(--primary-light)'; };
       cell.onmouseout = () => { cell.style.borderColor = isToday ? 'var(--primary)' : 'var(--border)'; };
 
@@ -141,6 +144,86 @@ window.CalendarPage = {
 
       cell.innerHTML = dayHtml + tasksHtml;
       cellsContainer.appendChild(cell);
+    }
+  },
+
+  showDayModal(dateStr) {
+    const dayLeads = this.leads.filter(l => l.next_contact_date === dateStr);
+    
+    let tasksHtml = '';
+    if (dayLeads.length > 0) {
+      tasksHtml = '<div style="display:flex; flex-direction:column; gap:12px; margin-bottom:20px; max-height:220px; overflow-y:auto; padding-right:4px;">';
+      dayLeads.forEach(l => {
+        tasksHtml += `
+          <div class="flex-between" style="padding:12px; background:var(--bg-primary); border:1px solid var(--border); border-radius:var(--radius-sm);">
+            <div>
+              <strong style="font-size:13px; color:var(--text-primary);">${l.full_name}</strong>
+              <div style="font-size:11px; color:var(--text-secondary); margin-top:2px;">📞 ${l.phone}</div>
+              <div style="font-size:11px; color:var(--warning); margin-top:4px; font-style:italic;">Topshiriq: ${l.next_action || 'Qo\'ng\'iroq qilish'}</div>
+            </div>
+            <button class="btn btn-secondary" style="padding:6px 12px; font-size:12px;" onclick="Modal.close(); LeadModal.show(${l.id})">Boshqarish</button>
+          </div>
+        `;
+      });
+      tasksHtml += '</div>';
+    } else {
+      tasksHtml = `<div style="padding:20px; text-align:center; color:var(--text-secondary); margin-bottom:20px; font-size:13px;">Ushbu kunda hech qanday topshiriqlar rejalashtirilmagan.</div>`;
+    }
+
+    let optionsHtml = '<option value="">Mijozni tanlang...</option>';
+    this.allLeads.forEach(l => {
+      optionsHtml += `<option value="${l.id}">${l.full_name} (${l.phone})</option>`;
+    });
+
+    Modal.show({
+      title: `📅 ${dateStr} topshiriqlari`,
+      content: `
+        <h4 style="margin-bottom:12px; font-size:14px; color:var(--text-primary);">Belgilangan topshiriqlar</h4>
+        ${tasksHtml}
+        
+        <hr style="border:0; border-top:1px solid var(--border); margin:20px 0;">
+        
+        <h4 style="margin-bottom:12px; font-size:14px; color:var(--text-primary);">Yangi topshiriq qo'shish</h4>
+        <form id="calendar-add-task-form" onsubmit="CalendarPage.saveNewTask(event, '${dateStr}')">
+          <div class="form-group">
+            <label>Mijoz (Lid)</label>
+            <select id="calendar-task-lead-id" class="form-control" required style="width: 100%;">
+              ${optionsHtml}
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Topshiriq tavsifi</label>
+            <input type="text" id="calendar-task-action" class="form-control" placeholder="Masalan: Qayta qo'ng'iroq qilish, suhbatlashish" required>
+          </div>
+          <button type="submit" class="btn btn-primary" style="width:100%; padding:12px;">Vazifani rejalashtirish</button>
+        </form>
+      `,
+      footer: `
+        <button class="btn btn-secondary" onclick="Modal.close()">Yopish</button>
+      `
+    });
+  },
+
+  async saveNewTask(e, dateStr) {
+    e.preventDefault();
+    const leadId = document.getElementById('calendar-task-lead-id').value;
+    const next_action = document.getElementById('calendar-task-action').value;
+
+    if (!leadId) {
+      Toast.error("Lidni tanlang");
+      return;
+    }
+
+    try {
+      await API.put(`/leads/${leadId}`, {
+        next_contact_date: dateStr,
+        next_action: next_action
+      });
+      Toast.success("Vazifa muvaffaqiyatli rejalashtirildi");
+      Modal.close();
+      await this.loadData();
+    } catch (err) {
+      Toast.error(err.message || "Vazifani saqlashda xatolik");
     }
   }
 };
