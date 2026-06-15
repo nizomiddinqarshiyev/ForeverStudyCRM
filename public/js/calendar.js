@@ -158,7 +158,7 @@ window.CalendarPage = {
           <div class="flex-between" style="padding:12px; background:var(--bg-primary); border:1px solid var(--border); border-radius:var(--radius-sm);">
             <div>
               <strong style="font-size:13px; color:var(--text-primary);">${l.full_name}</strong>
-              <div style="font-size:11px; color:var(--text-secondary); margin-top:2px;">📞 ${l.phone}</div>
+              <div style="font-size:11px; color:var(--text-secondary); margin-top:2px;">📞 ${window.formatPhone(l.phone)}</div>
               <div style="font-size:11px; color:var(--warning); margin-top:4px; font-style:italic;">Topshiriq: ${l.next_action || 'Qo\'ng\'iroq qilish'}</div>
             </div>
             <button class="btn btn-secondary" style="padding:6px 12px; font-size:12px;" onclick="Modal.close(); LeadModal.show(${l.id})">Boshqarish</button>
@@ -172,7 +172,7 @@ window.CalendarPage = {
 
     let optionsHtml = '<option value="">Mijozni tanlang...</option>';
     this.allLeads.forEach(l => {
-      optionsHtml += `<option value="${l.id}">${l.full_name} (${l.phone})</option>`;
+      optionsHtml += `<option value="${l.id}">${l.full_name} (${window.formatPhone(l.phone)})</option>`;
     });
 
     Modal.show({

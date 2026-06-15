@@ -42,7 +42,7 @@ window.LeadsPage = {
     this.table = new Table('#leads-table', {
       columns: [
         { key: 'full_name', label: 'Ism' },
-        { key: 'phone', label: 'Telefon' },
+        { key: 'phone', label: 'Telefon', render: v => window.formatPhone(v) },
         { key: 'course_name', label: 'Kurs', render: v => v ? `<span class="badge" style="background:var(--bg-secondary)">${v}</span>` : '-' },
         { key: 'stage', label: 'Bosqich', render: v => `<span class="badge badge-${this.stageColors[v]}">Bosqich ${v}</span>` },
         { key: 'status', label: 'Holat' },

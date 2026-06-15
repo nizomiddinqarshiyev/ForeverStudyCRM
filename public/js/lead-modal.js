@@ -107,7 +107,7 @@ window.LeadModal = {
         </div>
 
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:24px;background:var(--bg-primary);padding:20px;border-radius:var(--radius)">
-          <div><div class="text-muted" style="font-size:12px">Telefon</div><div style="font-weight:500"><a href="tel:${lead.phone}" style="color:var(--primary);text-decoration:none">${lead.phone}</a></div></div>
+          <div><div class="text-muted" style="font-size:12px">Telefon</div><div style="font-weight:500"><a href="tel:${lead.phone}" style="color:var(--primary);text-decoration:none">${window.formatPhone(lead.phone)}</a></div></div>
           <div><div class="text-muted" style="font-size:12px">Telegram</div><div style="font-weight:500">${lead.telegram || '-'}</div></div>
           <div><div class="text-muted" style="font-size:12px">Manba</div><div style="font-weight:500;text-transform:capitalize">${lead.source}</div></div>
           <div><div class="text-muted" style="font-size:12px">Kurs</div><div style="font-weight:500">${lead.course_name || '-'}</div></div>

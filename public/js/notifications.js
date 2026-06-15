@@ -119,7 +119,7 @@ const Notifications = {
             <strong style="font-size: 13px;">${r.full_name}</strong>
             <span class="badge" style="font-size: 9px; padding: 2px 6px; background:${indicatorColor}20; color:${indicatorColor}">${typeLabel}</span>
           </div>
-          <div style="font-size: 12px; color: var(--text-secondary); margin-bottom: 4px;">📞 ${r.phone}</div>
+          <div style="font-size: 12px; color: var(--text-secondary); margin-bottom: 4px;">📞 ${window.formatPhone(r.phone)}</div>
           <div style="font-size: 11px; color: var(--warning); font-style: italic;">↳ ${actionText}</div>
           <button onclick="Notifications.markAsRead(event, ${r.id})" style="position: absolute; right: 12px; bottom: 12px; background: var(--bg-secondary); border: 1px solid var(--border); border-radius: 4px; cursor: pointer; padding: 4px 6px; font-size: 10px; color: var(--text-primary); display: flex; align-items: center; justify-content: center; gap: 3px;" title="O'qildi deb belgilash">
             ✓ O'qildi

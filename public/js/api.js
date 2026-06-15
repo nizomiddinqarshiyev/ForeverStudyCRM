@@ -58,3 +58,18 @@ window.API = {
   put(endpoint, body) { return this.request('PUT', endpoint, body); },
   del(endpoint) { return this.request('DELETE', endpoint); }
 };
+
+window.formatPhone = function(phone) {
+  if (!phone) return '';
+  let cleaned = phone.replace(/[^\d+]/g, '');
+  if (cleaned.startsWith('998') && cleaned.length === 12) {
+    cleaned = '+' + cleaned;
+  } else if (!cleaned.startsWith('+') && (cleaned.length === 9 || (cleaned.length === 12 && !cleaned.startsWith('998')))) {
+    // If it's a 9 digit number, prepend +998
+    if (cleaned.length === 9) cleaned = '+998' + cleaned;
+  }
+  if (cleaned.startsWith('+998') && cleaned.length === 13) {
+    return `${cleaned.substring(0, 4)} ${cleaned.substring(4, 6)} ${cleaned.substring(6, 9)} ${cleaned.substring(9, 11)} ${cleaned.substring(11, 13)}`;
+  }
+  return phone;
+};

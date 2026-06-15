@@ -86,7 +86,7 @@ window.PipelinePage = {
             cards: leads.map(l => ({
               id: l.id,
               title: l.full_name,
-              subtitle: l.phone,
+              subtitle: window.formatPhone(l.phone),
               status: l.status,
               course: l.course_name || 'Kurs tanlanmagan',
               next_action: l.next_action,
@@ -112,7 +112,7 @@ window.PipelinePage = {
             cards: statusLeads.map(l => ({
               id: l.id,
               title: l.full_name,
-              subtitle: l.phone,
+              subtitle: window.formatPhone(l.phone),
               status: l.status,
               course: l.course_name || 'Kurs tanlanmagan',
               next_action: l.next_action,
