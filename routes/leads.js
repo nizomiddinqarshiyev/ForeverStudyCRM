@@ -12,8 +12,8 @@ router.get('/stats', verifyToken, (req, res) => {
     if (req.user.role !== 'admin') {
       total = db.prepare('SELECT COUNT(*) as count FROM leads WHERE (stage = 1 OR manager_id = ?)').get(req.user.id).count;
       byStageRows = db.prepare('SELECT stage, COUNT(*) as count FROM leads WHERE (stage = 1 OR manager_id = ?) GROUP BY stage').all(req.user.id);
-      today_follow_ups = db.prepare('SELECT COUNT(*) as count FROM leads WHERE (stage = 1 OR manager_id = ?) AND next_contact_date = ? AND COALESCE(reminder_read, 0) = 0').get(req.user.id, todayDate).count;
-      overdue_follow_ups = db.prepare("SELECT COUNT(*) as count FROM leads WHERE (stage = 1 OR manager_id = ?) AND next_contact_date < ? AND next_contact_date != '' AND next_contact_date IS NOT NULL AND COALESCE(reminder_read, 0) = 0").get(req.user.id, todayDate).count;
+      today_follow_ups = db.prepare('SELECT COUNT(*) as count FROM leads WHERE manager_id = ? AND next_contact_date = ? AND COALESCE(reminder_read, 0) = 0').get(req.user.id, todayDate).count;
+      overdue_follow_ups = db.prepare("SELECT COUNT(*) as count FROM leads WHERE manager_id = ? AND next_contact_date < ? AND next_contact_date != '' AND next_contact_date IS NOT NULL AND COALESCE(reminder_read, 0) = 0").get(req.user.id, todayDate).count;
     } else {
       total = db.prepare('SELECT COUNT(*) as count FROM leads').get().count;
       byStageRows = db.prepare('SELECT stage, COUNT(*) as count FROM leads GROUP BY stage').all();
@@ -124,7 +124,11 @@ router.get('/', verifyToken, (req, res) => {
     const params = [];
 
     if (req.user.role !== 'admin') {
-      query += ' AND (l.stage = 1 OR l.manager_id = ?)';
+      if (req.query.follow_up_today === 'true' || req.query.follow_up_overdue === 'true') {
+        query += ' AND l.manager_id = ?';
+      } else {
+        query += ' AND (l.stage = 1 OR l.manager_id = ?)';
+      }
       params.push(req.user.id);
     }
 
@@ -179,7 +183,11 @@ router.get('/', verifyToken, (req, res) => {
     let countQuery = 'SELECT COUNT(*) as count FROM leads l WHERE 1=1';
     const countParams = [];
     if (req.user.role !== 'admin') {
-      countQuery += ' AND (l.stage = 1 OR l.manager_id = ?)';
+      if (req.query.follow_up_today === 'true' || req.query.follow_up_overdue === 'true') {
+        countQuery += ' AND l.manager_id = ?';
+      } else {
+        countQuery += ' AND (l.stage = 1 OR l.manager_id = ?)';
+      }
       countParams.push(req.user.id);
     }
     if (req.query.stage) { countQuery += ' AND l.stage = ?'; countParams.push(req.query.stage); }
