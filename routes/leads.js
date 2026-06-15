@@ -12,13 +12,13 @@ router.get('/stats', verifyToken, (req, res) => {
     if (req.user.role !== 'admin') {
       total = db.prepare('SELECT COUNT(*) as count FROM leads WHERE (stage = 1 OR manager_id = ?)').get(req.user.id).count;
       byStageRows = db.prepare('SELECT stage, COUNT(*) as count FROM leads WHERE (stage = 1 OR manager_id = ?) GROUP BY stage').all(req.user.id);
-      today_follow_ups = db.prepare('SELECT COUNT(*) as count FROM leads WHERE (stage = 1 OR manager_id = ?) AND next_contact_date = ?').get(req.user.id, todayDate).count;
-      overdue_follow_ups = db.prepare("SELECT COUNT(*) as count FROM leads WHERE (stage = 1 OR manager_id = ?) AND next_contact_date < ? AND next_contact_date != '' AND next_contact_date IS NOT NULL").get(req.user.id, todayDate).count;
+      today_follow_ups = db.prepare('SELECT COUNT(*) as count FROM leads WHERE (stage = 1 OR manager_id = ?) AND next_contact_date = ? AND COALESCE(reminder_read, 0) = 0').get(req.user.id, todayDate).count;
+      overdue_follow_ups = db.prepare("SELECT COUNT(*) as count FROM leads WHERE (stage = 1 OR manager_id = ?) AND next_contact_date < ? AND next_contact_date != '' AND next_contact_date IS NOT NULL AND COALESCE(reminder_read, 0) = 0").get(req.user.id, todayDate).count;
     } else {
       total = db.prepare('SELECT COUNT(*) as count FROM leads').get().count;
       byStageRows = db.prepare('SELECT stage, COUNT(*) as count FROM leads GROUP BY stage').all();
-      today_follow_ups = db.prepare('SELECT COUNT(*) as count FROM leads WHERE next_contact_date = ?').get(todayDate).count;
-      overdue_follow_ups = db.prepare("SELECT COUNT(*) as count FROM leads WHERE next_contact_date < ? AND next_contact_date != '' AND next_contact_date IS NOT NULL").get(todayDate).count;
+      today_follow_ups = db.prepare('SELECT COUNT(*) as count FROM leads WHERE next_contact_date = ? AND COALESCE(reminder_read, 0) = 0').get(todayDate).count;
+      overdue_follow_ups = db.prepare("SELECT COUNT(*) as count FROM leads WHERE next_contact_date < ? AND next_contact_date != '' AND next_contact_date IS NOT NULL AND COALESCE(reminder_read, 0) = 0").get(todayDate).count;
     }
 
     const by_stage = {1:0, 2:0, 3:0, 4:0, 5:0, 6:0};
@@ -155,11 +155,11 @@ router.get('/', verifyToken, (req, res) => {
 
     const todayDate = new Date().toISOString().split('T')[0];
     if (req.query.follow_up_today === 'true') {
-      query += ' AND l.next_contact_date = ?';
+      query += ' AND l.next_contact_date = ? AND COALESCE(l.reminder_read, 0) = 0';
       params.push(todayDate);
     }
     if (req.query.follow_up_overdue === 'true') {
-      query += " AND l.next_contact_date < ? AND l.next_contact_date != '' AND l.next_contact_date IS NOT NULL";
+      query += " AND l.next_contact_date < ? AND l.next_contact_date != '' AND l.next_contact_date IS NOT NULL AND COALESCE(l.reminder_read, 0) = 0";
       params.push(todayDate);
     }
 
@@ -188,8 +188,8 @@ router.get('/', verifyToken, (req, res) => {
     if (req.query.course_id) { countQuery += ' AND l.course_id = ?'; countParams.push(req.query.course_id); }
     if (req.query.source) { countQuery += ' AND l.source = ?'; countParams.push(req.query.source); }
     if (req.query.search) { countQuery += ' AND (l.full_name LIKE ? OR l.phone LIKE ?)'; countParams.push(`%${req.query.search}%`, `%${req.query.search}%`); }
-    if (req.query.follow_up_today === 'true') { countQuery += ' AND l.next_contact_date = ?'; countParams.push(todayDate); }
-    if (req.query.follow_up_overdue === 'true') { countQuery += " AND l.next_contact_date < ? AND l.next_contact_date != '' AND l.next_contact_date IS NOT NULL"; countParams.push(todayDate); }
+    if (req.query.follow_up_today === 'true') { countQuery += ' AND l.next_contact_date = ? AND COALESCE(l.reminder_read, 0) = 0'; countParams.push(todayDate); }
+    if (req.query.follow_up_overdue === 'true') { countQuery += " AND l.next_contact_date < ? AND l.next_contact_date != '' AND l.next_contact_date IS NOT NULL AND COALESCE(l.reminder_read, 0) = 0"; countParams.push(todayDate); }
 
     const total = db.prepare(countQuery).get(...countParams).count;
 
@@ -251,16 +251,26 @@ router.post('/', verifyToken, (req, res) => {
 // PUT /api/leads/:id
 router.put('/:id', verifyToken, (req, res) => {
   try {
-    const { full_name, phone, telegram, source, course_id, manager_id, notes, next_action, next_contact_date, age, inquiry_for, address, stage, status } = req.body;
+    const { full_name, phone, telegram, source, course_id, manager_id, notes, next_action, next_contact_date, age, inquiry_for, address, stage, status, reminder_read } = req.body;
     
     // Get old lead details for history check
-    const oldLead = db.prepare('SELECT stage, status, manager_id FROM leads WHERE id = ?').get(req.params.id);
+    const oldLead = db.prepare('SELECT stage, status, manager_id, next_contact_date, reminder_read FROM leads WHERE id = ?').get(req.params.id);
     if (!oldLead) {
       return res.status(404).json({ success: false, error: 'Lead topilmadi' });
     }
 
     if (req.user.role !== 'admin' && oldLead.stage !== 1 && oldLead.manager_id !== req.user.id) {
       return res.status(403).json({ success: false, error: 'Sizda ushbu leadni tahrirlash huquqi yo\'q' });
+    }
+
+    // Determine reminder_read value.
+    // If next_contact_date has changed, reset reminder_read to 0 (unread).
+    // Otherwise, if reminder_read is provided, use it. Otherwise retain old value.
+    let finalReminderRead = oldLead.reminder_read;
+    if (next_contact_date !== undefined && next_contact_date !== oldLead.next_contact_date) {
+      finalReminderRead = 0;
+    } else if (reminder_read !== undefined) {
+      finalReminderRead = parseInt(reminder_read);
     }
 
     const update = db.prepare(`
@@ -279,6 +289,7 @@ router.put('/:id', verifyToken, (req, res) => {
         address = COALESCE(?, address),
         stage = COALESCE(?, stage),
         status = COALESCE(?, status),
+        reminder_read = ?,
         updated_at = datetime('now')
       WHERE id = ?
     `);
@@ -298,6 +309,7 @@ router.put('/:id', verifyToken, (req, res) => {
       address, 
       stage !== undefined ? parseInt(stage) : undefined,
       status,
+      finalReminderRead,
       req.params.id
     );
 

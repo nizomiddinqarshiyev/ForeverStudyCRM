@@ -114,13 +114,16 @@ const Notifications = {
       const actionText = r.next_action || 'Qo\'ng\'iroq qilish';
 
       html += `
-        <div class="notification-item" onclick="Notifications.handleItemClick(${r.id})" style="padding: 12px 16px; border-bottom: 1px solid var(--border); cursor: pointer; transition: var(--transition);">
-          <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 4px;">
+        <div class="notification-item" onclick="Notifications.handleItemClick(${r.id})" style="padding: 12px 16px; border-bottom: 1px solid var(--border); cursor: pointer; transition: var(--transition); position: relative;">
+          <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 4px; padding-right: 20px;">
             <strong style="font-size: 13px;">${r.full_name}</strong>
             <span class="badge" style="font-size: 9px; padding: 2px 6px; background:${indicatorColor}20; color:${indicatorColor}">${typeLabel}</span>
           </div>
           <div style="font-size: 12px; color: var(--text-secondary); margin-bottom: 4px;">📞 ${r.phone}</div>
           <div style="font-size: 11px; color: var(--warning); font-style: italic;">↳ ${actionText}</div>
+          <button onclick="Notifications.markAsRead(event, ${r.id})" style="position: absolute; right: 12px; bottom: 12px; background: var(--bg-secondary); border: 1px solid var(--border); border-radius: 4px; cursor: pointer; padding: 4px 6px; font-size: 10px; color: var(--text-primary); display: flex; align-items: center; justify-content: center; gap: 3px;" title="O'qildi deb belgilash">
+            ✓ O'qildi
+          </button>
         </div>
       `;
     });
@@ -131,5 +134,18 @@ const Notifications = {
   handleItemClick(leadId) {
     this.close();
     LeadModal.show(leadId);
+  },
+
+  async markAsRead(e, leadId) {
+    if (e) e.stopPropagation();
+    try {
+      await API.put(`/leads/${leadId}`, { reminder_read: 1 });
+      await this.fetchReminders();
+      if (window.Dashboard && typeof window.Dashboard.loadStats === 'function') {
+        window.Dashboard.loadStats();
+      }
+    } catch (err) {
+      console.error('Failed to mark reminder as read:', err);
+    }
   }
 };
