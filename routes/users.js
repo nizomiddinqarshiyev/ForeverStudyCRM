@@ -54,10 +54,14 @@ router.post('/', verifyToken, requireAdmin, (req, res) => {
 // PUT /api/users/:id
 router.put('/:id', verifyToken, requireAdmin, (req, res) => {
   try {
-    const { full_name, password, role } = req.body;
+    const { username, full_name, password, role } = req.body;
     
-    let updateQuery = 'UPDATE users SET full_name = COALESCE(?, full_name), role = COALESCE(?, role)';
-    const params = [full_name, role];
+    let updateQuery = 'UPDATE users SET full_name = COALESCE(?, full_name), role = COALESCE(?, role), username = COALESCE(?, username)';
+    const params = [
+      full_name === undefined ? null : full_name,
+      role === undefined ? null : role,
+      username === undefined ? null : username
+    ];
 
     if (password) {
       updateQuery += ', password_hash = ?';
@@ -66,9 +70,15 @@ router.put('/:id', verifyToken, requireAdmin, (req, res) => {
     updateQuery += ' WHERE id = ?';
     params.push(req.params.id);
 
-    db.prepare(updateQuery).run(...params);
-    
-    res.json({ success: true });
+    try {
+      db.prepare(updateQuery).run(...params);
+      res.json({ success: true });
+    } catch (e) {
+      if (e.message.includes('UNIQUE constraint failed')) {
+        return res.status(400).json({ success: false, error: 'Bu login band' });
+      }
+      throw e;
+    }
   } catch (error) {
     res.status(500).json({ success: false, error: error.message });
   }

@@ -77,6 +77,7 @@ window.ManagersPage = {
       title: "Menejer Ma'lumotlarini Tahrirlash",
       content: `
         <div class="form-group"><label>To'liq ism (F.I.Sh)</label><input type="text" id="m-name" class="form-control" value="${manager.full_name}"></div>
+        <div class="form-group"><label>Login</label><input type="text" id="m-user" class="form-control" value="${manager.username}"></div>
         <div class="form-group"><label>Roli</label>
           <select id="m-role" class="form-control">
             <option value="manager" ${manager.role === 'manager' ? 'selected' : ''}>Menejer</option>
@@ -96,20 +97,19 @@ window.ManagersPage = {
     const full_name = document.getElementById('m-name').value;
     const role = document.getElementById('m-role').value;
     const password = document.getElementById('m-pass').value;
+    const username = document.getElementById('m-user').value;
     
-    let username = '';
     if (!id) {
-      username = document.getElementById('m-user').value;
       if (!username || !password || !full_name) {
         return Toast.error("Barcha maydonlar to'ldirilishi shart");
       }
     } else {
-      if (!full_name) return Toast.error("Ism bo'sh bo'lishi mumkin emas");
+      if (!full_name || !username) return Toast.error("Ism va Login bo'sh bo'lishi mumkin emas");
     }
 
     try {
       if (id) {
-        await API.put(`/users/${id}`, { full_name, role, password });
+        await API.put(`/users/${id}`, { username, full_name, role, password });
         Toast.success("O'zgartirildi");
       } else {
         await API.post('/users', { username, password, full_name, role });
