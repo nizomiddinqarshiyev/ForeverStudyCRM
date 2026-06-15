@@ -27,7 +27,7 @@ window.Sidebar = {
     });
 
     container.innerHTML = `
-      <div class="sidebar-logo">🇰🇷 EDU CRM</div>
+      <div class="sidebar-logo">ForeverStudy CRM</div>
       <div class="sidebar-nav">
         ${navHtml}
       </div>
