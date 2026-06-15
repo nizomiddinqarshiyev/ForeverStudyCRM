@@ -3,8 +3,8 @@ window.AuthPage = {
     container.innerHTML = `
       <div class="login-page">
         <div class="login-card">
-          <div class="login-logo">🇰🇷 EDU CRM</div>
-          <div class="login-subtitle">Koreya tili o'quv markazi tizimi</div>
+          <div class="login-logo">ForeverStudy CRM</div>
+          <div class="login-subtitle">O'quv markazi boshqaruv tizimi</div>
           
           <form id="login-form">
             <div class="form-group">
