@@ -273,6 +273,8 @@ router.put('/:id', verifyToken, (req, res) => {
       finalReminderRead = parseInt(reminder_read);
     }
 
+    const val = (x) => x === undefined ? null : x;
+
     const update = db.prepare(`
       UPDATE leads SET 
         full_name = COALESCE(?, full_name),
@@ -295,21 +297,21 @@ router.put('/:id', verifyToken, (req, res) => {
     `);
 
     update.run(
-      full_name, 
-      phone, 
-      telegram, 
-      source, 
-      course_id, 
-      manager_id, 
-      notes, 
-      next_action, 
-      next_contact_date, 
-      age !== undefined ? (age ? parseInt(age) : null) : undefined, 
-      inquiry_for, 
-      address, 
-      stage !== undefined ? parseInt(stage) : undefined,
-      status,
-      finalReminderRead,
+      val(full_name), 
+      val(phone), 
+      val(telegram), 
+      val(source), 
+      val(course_id), 
+      val(manager_id), 
+      val(notes), 
+      val(next_action), 
+      val(next_contact_date), 
+      age !== undefined ? (age ? parseInt(age) : null) : null, 
+      val(inquiry_for), 
+      val(address), 
+      stage !== undefined ? parseInt(stage) : null,
+      val(status),
+      finalReminderRead !== undefined && finalReminderRead !== null ? parseInt(finalReminderRead) : 0,
       req.params.id
     );
 
