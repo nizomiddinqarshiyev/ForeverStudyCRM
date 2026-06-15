@@ -90,6 +90,7 @@ window.PipelinePage = {
               status: l.status,
               course: l.course_name || 'Kurs tanlanmagan',
               next_action: l.next_action,
+              updated_at: l.updated_at,
               is_overdue: l.next_contact_date && l.next_contact_date < today
             }))
           });
@@ -115,6 +116,7 @@ window.PipelinePage = {
               status: l.status,
               course: l.course_name || 'Kurs tanlanmagan',
               next_action: l.next_action,
+              updated_at: l.updated_at,
               is_overdue: l.next_contact_date && l.next_contact_date < today
             }))
           };

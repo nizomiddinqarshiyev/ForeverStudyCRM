@@ -31,6 +31,23 @@ window.Kanban = class {
       
       col.cards.forEach(card => {
         const isOverdue = card.is_overdue ? 'overdue' : '';
+        
+        let dateStr = '';
+        if (card.updated_at) {
+          try {
+            // Convert SQLite datetime format (YYYY-MM-DD HH:MM:SS) to ISO format
+            const isoStr = card.updated_at.replace(' ', 'T') + 'Z';
+            const d = new Date(isoStr);
+            const day = String(d.getDate()).padStart(2, '0');
+            const month = String(d.getMonth() + 1).padStart(2, '0');
+            const hour = String(d.getHours()).padStart(2, '0');
+            const min = String(d.getMinutes()).padStart(2, '0');
+            dateStr = `${day}.${month} ${hour}:${min}`;
+          } catch (e) {
+            console.error('Error parsing date:', e);
+          }
+        }
+
         html += `
           <div class="kanban-card ${isOverdue}" draggable="true" data-id="${card.id}" data-stage="${col.id}">
             <div class="flex-between mb-1">
@@ -38,8 +55,9 @@ window.Kanban = class {
               <span class="badge badge-stage-${col.id}">${card.status}</span>
             </div>
             <div class="kanban-card-subtitle">${card.subtitle}</div>
-            <div class="flex gap-2">
+            <div class="flex-between" style="align-items: center; gap: 8px;">
               <span class="badge" style="background:var(--bg-primary);color:var(--text-secondary)">${card.course}</span>
+              ${dateStr ? `<span style="font-size:11px;color:var(--text-secondary);display:inline-flex;align-items:center;gap:4px">🕒 ${dateStr}</span>` : ''}
             </div>
             ${card.next_action ? `<div style="font-size:11px;color:var(--warning);margin-top:8px;font-style:italic">↳ ${card.next_action}</div>` : ''}
           </div>

@@ -6,23 +6,25 @@ const { verifyToken } = require('../middleware/auth');
 // GET /api/leads/stats
 router.get('/stats', verifyToken, (req, res) => {
   try {
-    // Total
-    const total = db.prepare('SELECT COUNT(*) as count FROM leads').get().count;
-    
-    // By stage
-    const byStageRows = db.prepare('SELECT stage, COUNT(*) as count FROM leads GROUP BY stage').all();
+    const todayDate = new Date().toISOString().split('T')[0];
+    let total, byStageRows, today_follow_ups, overdue_follow_ups;
+
+    if (req.user.role !== 'admin') {
+      total = db.prepare('SELECT COUNT(*) as count FROM leads WHERE (stage = 1 OR manager_id = ?)').get(req.user.id).count;
+      byStageRows = db.prepare('SELECT stage, COUNT(*) as count FROM leads WHERE (stage = 1 OR manager_id = ?) GROUP BY stage').all(req.user.id);
+      today_follow_ups = db.prepare('SELECT COUNT(*) as count FROM leads WHERE (stage = 1 OR manager_id = ?) AND next_contact_date = ?').get(req.user.id, todayDate).count;
+      overdue_follow_ups = db.prepare("SELECT COUNT(*) as count FROM leads WHERE (stage = 1 OR manager_id = ?) AND next_contact_date < ? AND next_contact_date != '' AND next_contact_date IS NOT NULL").get(req.user.id, todayDate).count;
+    } else {
+      total = db.prepare('SELECT COUNT(*) as count FROM leads').get().count;
+      byStageRows = db.prepare('SELECT stage, COUNT(*) as count FROM leads GROUP BY stage').all();
+      today_follow_ups = db.prepare('SELECT COUNT(*) as count FROM leads WHERE next_contact_date = ?').get(todayDate).count;
+      overdue_follow_ups = db.prepare("SELECT COUNT(*) as count FROM leads WHERE next_contact_date < ? AND next_contact_date != '' AND next_contact_date IS NOT NULL").get(todayDate).count;
+    }
+
     const by_stage = {1:0, 2:0, 3:0, 4:0, 5:0, 6:0};
     byStageRows.forEach(row => {
       by_stage[row.stage] = row.count;
     });
-
-    const todayDate = new Date().toISOString().split('T')[0];
-    
-    // Today's follow-ups
-    const today_follow_ups = db.prepare('SELECT COUNT(*) as count FROM leads WHERE next_contact_date = ?').get(todayDate).count;
-    
-    // Overdue follow-ups
-    const overdue_follow_ups = db.prepare("SELECT COUNT(*) as count FROM leads WHERE next_contact_date < ? AND next_contact_date != '' AND next_contact_date IS NOT NULL").get(todayDate).count;
 
     res.json({
       success: true,
@@ -36,12 +38,18 @@ router.get('/stats', verifyToken, (req, res) => {
 // GET /api/leads/pipeline
 router.get('/pipeline', verifyToken, (req, res) => {
   try {
-    const leads = db.prepare(`
-      SELECT l.id, l.full_name, l.phone, l.source, l.stage, l.status, l.next_action, l.next_contact_date, c.name as course_name 
+    let query = `
+      SELECT l.id, l.full_name, l.phone, l.source, l.stage, l.status, l.next_action, l.next_contact_date, l.updated_at, c.name as course_name 
       FROM leads l 
       LEFT JOIN courses c ON l.course_id = c.id
-      ORDER BY l.updated_at DESC
-    `).all();
+    `;
+    const params = [];
+    if (req.user.role !== 'admin') {
+      query += ` WHERE (l.stage = 1 OR l.manager_id = ?)`;
+      params.push(req.user.id);
+    }
+    query += ` ORDER BY l.updated_at DESC`;
+    const leads = db.prepare(query).all(...params);
 
     const pipeline = {1:[], 2:[], 3:[], 4:[], 5:[], 6:[]};
     leads.forEach(lead => {
@@ -59,6 +67,13 @@ router.get('/pipeline', verifyToken, (req, res) => {
 // GET /api/leads/:id/history
 router.get('/:id/history', verifyToken, (req, res) => {
   try {
+    // Check if user has permission to see history
+    const lead = db.prepare('SELECT stage, manager_id FROM leads WHERE id = ?').get(req.params.id);
+    if (!lead) return res.status(404).json({ success: false, error: 'Lead topilmadi' });
+    if (req.user.role !== 'admin' && lead.stage !== 1 && lead.manager_id !== req.user.id) {
+      return res.status(403).json({ success: false, error: 'Sizda ruxsat yo\'q' });
+    }
+
     const history = db.prepare(`
       SELECT h.*, u.full_name as user_name 
       FROM lead_history h
@@ -85,6 +100,11 @@ router.get('/:id', verifyToken, (req, res) => {
     `).get(req.params.id);
 
     if (!lead) return res.status(404).json({ success: false, error: 'Lead topilmadi' });
+
+    if (req.user.role !== 'admin' && lead.stage !== 1 && lead.manager_id !== req.user.id) {
+      return res.status(403).json({ success: false, error: 'Sizda bu leadni ko\'rish huquqi yo\'q' });
+    }
+
     res.json({ success: true, data: lead });
   } catch (error) {
     res.status(500).json({ success: false, error: error.message });
@@ -102,6 +122,11 @@ router.get('/', verifyToken, (req, res) => {
       WHERE 1=1
     `;
     const params = [];
+
+    if (req.user.role !== 'admin') {
+      query += ' AND (l.stage = 1 OR l.manager_id = ?)';
+      params.push(req.user.id);
+    }
 
     if (req.query.stage) {
       query += ' AND l.stage = ?';
@@ -153,6 +178,10 @@ router.get('/', verifyToken, (req, res) => {
     // Get total count for pagination
     let countQuery = 'SELECT COUNT(*) as count FROM leads l WHERE 1=1';
     const countParams = [];
+    if (req.user.role !== 'admin') {
+      countQuery += ' AND (l.stage = 1 OR l.manager_id = ?)';
+      countParams.push(req.user.id);
+    }
     if (req.query.stage) { countQuery += ' AND l.stage = ?'; countParams.push(req.query.stage); }
     if (req.query.status) { countQuery += ' AND l.status = ?'; countParams.push(req.query.status); }
     if (req.query.manager_id) { countQuery += ' AND l.manager_id = ?'; countParams.push(req.query.manager_id); }
@@ -225,9 +254,13 @@ router.put('/:id', verifyToken, (req, res) => {
     const { full_name, phone, telegram, source, course_id, manager_id, notes, next_action, next_contact_date, age, inquiry_for, address, stage, status } = req.body;
     
     // Get old lead details for history check
-    const oldLead = db.prepare('SELECT stage, status FROM leads WHERE id = ?').get(req.params.id);
+    const oldLead = db.prepare('SELECT stage, status, manager_id FROM leads WHERE id = ?').get(req.params.id);
     if (!oldLead) {
       return res.status(404).json({ success: false, error: 'Lead topilmadi' });
+    }
+
+    if (req.user.role !== 'admin' && oldLead.stage !== 1 && oldLead.manager_id !== req.user.id) {
+      return res.status(403).json({ success: false, error: 'Sizda ushbu leadni tahrirlash huquqi yo\'q' });
     }
 
     const update = db.prepare(`
@@ -301,9 +334,13 @@ router.put('/:id/stage', verifyToken, (req, res) => {
       return res.status(400).json({ success: false, error: 'Bosqich va holat majburiy' });
     }
 
-    const oldLead = db.prepare('SELECT stage, status FROM leads WHERE id = ?').get(req.params.id);
+    const oldLead = db.prepare('SELECT stage, status, manager_id FROM leads WHERE id = ?').get(req.params.id);
     if (!oldLead) {
       return res.status(404).json({ success: false, error: 'Lead topilmadi' });
+    }
+
+    if (req.user.role !== 'admin' && oldLead.stage !== 1 && oldLead.manager_id !== req.user.id) {
+      return res.status(403).json({ success: false, error: 'Sizda ushbu leadni o\'zgartirish huquqi yo\'q' });
     }
 
     const update = db.prepare(`
@@ -332,6 +369,15 @@ router.post('/:id/action', verifyToken, (req, res) => {
   try {
     const { action_type, comment } = req.body;
     
+    const oldLead = db.prepare('SELECT stage, manager_id FROM leads WHERE id = ?').get(req.params.id);
+    if (!oldLead) {
+      return res.status(404).json({ success: false, error: 'Lead topilmadi' });
+    }
+
+    if (req.user.role !== 'admin' && oldLead.stage !== 1 && oldLead.manager_id !== req.user.id) {
+      return res.status(403).json({ success: false, error: 'Ruxsat berilmagan' });
+    }
+
     db.prepare(`
       INSERT INTO lead_history (lead_id, user_id, action_type, comment)
       VALUES (?, ?, ?, ?)
@@ -348,6 +394,15 @@ router.post('/:id/action', verifyToken, (req, res) => {
 // DELETE /api/leads/:id
 router.delete('/:id', verifyToken, (req, res) => {
   try {
+    const oldLead = db.prepare('SELECT stage, manager_id FROM leads WHERE id = ?').get(req.params.id);
+    if (!oldLead) {
+      return res.status(404).json({ success: false, error: 'Lead topilmadi' });
+    }
+
+    if (req.user.role !== 'admin' && oldLead.stage !== 1 && oldLead.manager_id !== req.user.id) {
+      return res.status(403).json({ success: false, error: 'Sizda ushbu leadni o\'chirish huquqi yo\'q' });
+    }
+
     db.prepare('DELETE FROM lead_history WHERE lead_id = ?').run(req.params.id);
     db.prepare('DELETE FROM payments WHERE lead_id = ?').run(req.params.id);
     db.prepare('DELETE FROM leads WHERE id = ?').run(req.params.id);

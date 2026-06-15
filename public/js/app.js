@@ -111,6 +111,7 @@ window.App = {
     const pages = {
       'dashboard': DashboardPage,
       'pipeline': PipelinePage,
+      'calendar': CalendarPage,
       'leads': LeadsPage,
       'courses': CoursesPage,
       'managers': ManagersPage,

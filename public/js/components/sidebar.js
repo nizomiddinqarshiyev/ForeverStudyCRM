@@ -6,6 +6,7 @@ window.Sidebar = {
     const navItems = [
       { id: 'dashboard', icon: '📊', label: 'Dashboard' },
       { id: 'pipeline', icon: '📋', label: 'Pipeline' },
+      { id: 'calendar', icon: '📅', label: 'Kalendar' },
       { id: 'leads', icon: '👤', label: 'Lidlar' },
       { id: 'courses', icon: '📚', label: 'Kurslar' },
       { id: 'managers', icon: '👔', label: 'Menejerlar', adminOnly: true },
