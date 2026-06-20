@@ -120,6 +120,7 @@ select.form-control option { background: var(--bg-secondary); }
 .toast.success { border-left-color: var(--success); }
 .toast.error { border-left-color: var(--danger); }
 @keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+@keyframes logoFadeIn { from { transform: translateX(-8px); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
 
 /* Helpers */
 .flex { display: flex; }

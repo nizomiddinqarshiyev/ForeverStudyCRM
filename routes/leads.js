@@ -438,7 +438,7 @@ router.delete('/:id', verifyToken, (req, res) => {
 // POST /api/leads/public (Public lead registration from landing page)
 router.post('/public', (req, res) => {
   try {
-    const { full_name, phone, age, course_id } = req.body;
+    const { full_name, phone, age, reason } = req.body;
     
     if (!full_name || !phone) {
       return res.status(400).json({ success: false, error: 'Ism va telefon raqam majburiy' });
@@ -450,15 +450,15 @@ router.post('/public', (req, res) => {
 
     const insert = db.prepare(`
       INSERT INTO leads (full_name, phone, source, course_id, manager_id, stage, status, age, inquiry_for, address, telegram, notes, next_action, next_contact_date)
-      VALUES (?, ?, 'website', ?, ?, 1, 'Yangi lead', ?, 'O''zi uchun', '', '', '', '', '')
+      VALUES (?, ?, 'website', NULL, ?, 1, 'Yangi lead', ?, 'O''zi uchun', '', '', ?, '', '')
     `);
 
     const result = insert.run(
       full_name,
       phone,
-      course_id ? parseInt(course_id) : null,
       managerId,
-      age ? parseInt(age) : null
+      age ? parseInt(age) : null,
+      reason || ''
     );
 
     db.prepare(`

@@ -2,9 +2,11 @@ window.AuthPage = {
   render(container) {
     container.innerHTML = `
       <div class="login-page">
-        <div class="login-card">
-          <div class="login-logo">ForeverStudy CRM</div>
-          <div class="login-subtitle">O'quv markazi boshqaruv tizimi</div>
+        <div class="login-card" style="text-align: center;">
+          <div style="display: flex; justify-content: center; margin-bottom: 16px; animation: logoFadeIn 0.8s ease-out;">
+            <img src="/logo.png" alt="ForeverStudy Logo" style="height: 110px; max-width: 100%; object-fit: contain; background: white; padding: 6px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.12);">
+          </div>
+          <div class="login-subtitle" style="margin-top: 8px;">O'quv markazi boshqaruv tizimi</div>
           
           <form id="login-form">
             <div class="form-group">

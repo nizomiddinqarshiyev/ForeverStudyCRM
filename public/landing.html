@@ -4,10 +4,15 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>ForeverStudy - Koreys tili o'quv markazi</title>
+  <link rel="icon" type="image/png" href="/logo.png">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <style>
+    @keyframes logoFadeIn {
+      from { transform: translateX(-8px); opacity: 0; }
+      to { transform: translateX(0); opacity: 1; }
+    }
     :root {
       --primary: #6c5ce7;
       --primary-light: #a855f7;
@@ -501,9 +506,16 @@
 
   <header>
     <div class="container header-flex">
-      <div class="logo">ForeverStudy</div>
+      <div class="logo" style="display: flex; align-items: center; gap: 10px;">
+        <img src="/logo.png" alt="ForeverStudy Logo" style="height: 48px; max-width: 100%; object-fit: contain; flex-shrink: 0;">
+        <div style="display: flex; flex-direction: column; animation: logoFadeIn 0.8s ease-out; line-height: 1.1; font-family: 'Outfit', sans-serif;">
+          <div style="display: flex; font-size: 20px; font-weight: 800; letter-spacing: -0.5px;">
+            <span style="color: #0b53a4;">Forever</span><span style="color: #e52825; margin-left: 2px;">Study</span>
+          </div>
+          <span style="font-size: 11px; color: var(--text-muted); text-transform: uppercase; font-weight: 600; letter-spacing: 1px; margin-top: 2px;">Education</span>
+        </div>
+      </div>
       <div class="nav-links">
-        <a href="#courses">Kurslar</a>
         <a href="#register">Ro'yxatdan o'tish</a>
         <a href="/crm" class="btn btn-secondary">CRMga kirish</a>
       </div>
@@ -541,10 +553,20 @@
             </div>
 
             <div class="form-group">
-              <label>Qaysi kursda o'qimoqchisiz?</label>
-              <select id="course" class="form-control" required>
-                <option value="">Kursni tanlang</option>
+              <label>Nega koreys tilini o'rganmoqchisiz?</label>
+              <select id="reason-select" class="form-control" onchange="toggleOtherReasonInput(this.value)" required>
+                <option value="">Sababini tanlang</option>
+                <option value="Koreyaga ketmoqchiman">Koreyaga ketmoqchiman</option>
+                <option value="Darajamni oshirmoqchiman">Darajamni oshirmoqchiman</option>
+                <option value="Ish uchun o'rganmoqchiman">Ish uchun o'rganmoqchiman</option>
+                <option value="Qiziqganim uchun">Qiziqganim uchun</option>
+                <option value="Boshqa">Boshqa</option>
               </select>
+            </div>
+
+            <div class="form-group" id="other-reason-group" style="display: none; margin-top: 12px;">
+              <label>Boshqa sababni kiriting</label>
+              <input type="text" id="other-reason" class="form-control" placeholder="Sababini yozing...">
             </div>
 
             <button type="submit" class="btn btn-primary" style="width: 100%; padding: 14px; font-size: 15px;">Ro'yxatdan o'tish</button>
@@ -573,14 +595,7 @@
       </div>
     </div>
 
-    <!-- Courses Section -->
-    <section class="courses-section" id="courses">
-      <h2 class="section-title">Bizning Kurslar</h2>
-      <p class="section-subtitle">Har qanday darajadagi talabalar uchun maxsus ishlab chiqilgan o'quv dasturlari</p>
-      <div class="courses-grid" id="coursesGrid">
-        <div style="grid-column: 1/-1; text-align: center; color: var(--text-muted);">Kurslar yuklanmoqda...</div>
-      </div>
-    </section>
+
 
     <!-- Features Section -->
     <section class="features-section">
@@ -694,56 +709,17 @@
   </div>
 
   <script>
-    // Load courses list from public API on load
-    document.addEventListener('DOMContentLoaded', async () => {
-      try {
-        const res = await fetch('/api/courses/public');
-        const json = await res.json();
-        if (json.success) {
-          const select = document.getElementById('course');
-          const grid = document.getElementById('coursesGrid');
-          grid.innerHTML = ''; // Clear loading placeholder
-          
-          json.data.forEach(c => {
-            // Populate select option
-            const opt = document.createElement('option');
-            opt.value = c.id;
-            opt.textContent = c.name;
-            select.appendChild(opt);
-
-            // Create course card
-            const card = document.createElement('div');
-            card.className = 'course-card';
-            
-            let tagText = "Koreys tili";
-            if (c.name.toLowerCase().includes("topik")) tagText = "Imtihon";
-            else if (c.name.toLowerCase().includes("intensiv")) tagText = "Tezkor";
-            else if (c.name.toLowerCase().includes("boshlang'ich") || c.name.toLowerCase().includes("a1")) tagText = "A1 Daraja";
-            else if (c.name.toLowerCase().includes("o'rta") || c.name.toLowerCase().includes("a2")) tagText = "A2-B1 Daraja";
-
-            card.innerHTML = `
-              <div>
-                <span class="course-tag">${tagText}</span>
-                <h3 class="course-title">${c.name}</h3>
-                <p class="course-desc">Sifatli ta'lim va chuqurlashtirilgan o'qitish dasturi yordamida qisqa muddatda natijaga erishing.</p>
-              </div>
-              <div>
-                <button onclick="selectCourse(${c.id})" class="btn btn-primary" style="width: 100%;">Yozilish</button>
-              </div>
-            `;
-            grid.appendChild(card);
-          });
-        }
-      } catch (err) {
-        console.error("Kurslarni yuklashda xatolik:", err);
+    function toggleOtherReasonInput(val) {
+      const otherGroup = document.getElementById('other-reason-group');
+      const otherInput = document.getElementById('other-reason');
+      if (val === 'Boshqa') {
+        otherGroup.style.display = 'block';
+        otherInput.required = true;
+      } else {
+        otherGroup.style.display = 'none';
+        otherInput.required = false;
+        otherInput.value = '';
       }
-    });
-
-    function selectCourse(courseId) {
-      const select = document.getElementById('course');
-      select.value = courseId;
-      document.getElementById('register').scrollIntoView({ behavior: 'smooth' });
-      document.getElementById('name').focus();
     }
 
     function toggleFaq(element) {
@@ -763,19 +739,24 @@
       const full_name = document.getElementById('name').value;
       const phone = document.getElementById('phone').value;
       const age = document.getElementById('age').value;
-      const course_id = document.getElementById('course').value;
+      
+      let reason = document.getElementById('reason-select').value;
+      if (reason === 'Boshqa') {
+        reason = document.getElementById('other-reason').value;
+      }
 
       try {
         const res = await fetch('/api/leads/public', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ full_name, phone, age, course_id })
+          body: JSON.stringify({ full_name, phone, age, reason })
         });
         const json = await res.json();
 
         if (json.success) {
           document.getElementById('regForm').reset();
           document.getElementById('phone').value = "+998";
+          document.getElementById('other-reason-group').style.display = 'none';
           showSuccessModal();
         } else {
           showToast(json.error || "Xatolik yuz berdi", false);

@@ -27,7 +27,15 @@ window.Sidebar = {
     });
 
     container.innerHTML = `
-      <div class="sidebar-logo">ForeverStudy CRM</div>
+      <div class="sidebar-logo" style="display:flex; align-items:center; gap:10px; padding: 12px 16px; border-bottom: 1px solid var(--border); background: none; box-sizing: border-box;">
+        <img src="/logo.png" alt="ForeverStudy Logo" style="height: 46px; max-width: 100%; object-fit: contain; background: white; padding: 4px; border-radius: 6px; box-shadow: 0 2px 8px rgba(0,0,0,0.15); flex-shrink: 0;">
+        <div style="display: flex; flex-direction: column; animation: logoFadeIn 0.8s ease-out; line-height: 1.1;">
+          <div style="display: flex; font-size: 17px; font-weight: 800; font-family: 'Inter', sans-serif; letter-spacing: -0.5px;">
+            <span style="color: #0b53a4;">Forever</span><span style="color: #e52825; margin-left: 2px;">Study</span>
+          </div>
+          <span style="font-size: 9.5px; color: var(--text-secondary); text-transform: uppercase; font-weight: 600; letter-spacing: 1px; margin-top: 2px;">Education</span>
+        </div>
+      </div>
       <div class="sidebar-nav">
         ${navHtml}
       </div>
