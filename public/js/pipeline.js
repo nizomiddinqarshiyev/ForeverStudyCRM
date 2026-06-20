@@ -1,6 +1,7 @@
 window.PipelinePage = {
   kanban: null,
   currentStageView: 'all', // 'all' or '1'..'6'
+  selectedLeadIds: new Set(),
   stageTitles: {
     1: "1. Yangi leadlar",
     2: "2. Gaplashilgan",
@@ -22,6 +23,10 @@ window.PipelinePage = {
   },
 
   async render(container) {
+    // Clear selection when rendering the page
+    this.selectedLeadIds.clear();
+    this.renderBulkActionsBar();
+
     let backButton = '';
     if (this.currentStageView !== 'all') {
       backButton = `<button class="btn btn-secondary" onclick="PipelinePage.changeView('all')" style="margin-right: 12px; padding: 10px 16px;">◀ Ortga</button>`;
@@ -55,7 +60,7 @@ window.PipelinePage = {
     this.kanban = new Kanban('#pipeline-board', {
       columns: [],
       onCardMove: this.handleCardMove.bind(this),
-      onCardClick: (id) => LeadModal.show(id),
+      onCardClick: (id, event) => this.handleCardClick(id, event),
       onColumnClick: this.handleColumnClick.bind(this)
     });
 
@@ -191,6 +196,132 @@ window.PipelinePage = {
       this.loadData();
     } catch (error) {
       Toast.error(error.message);
+    }
+  },
+
+  handleCardClick(id, event) {
+    if (event && (event.ctrlKey || event.metaKey)) {
+      // Toggle selection
+      const leadId = parseInt(id);
+      const cardEl = document.querySelector(`.kanban-card[data-id="${id}"]`);
+      if (this.selectedLeadIds.has(leadId)) {
+        this.selectedLeadIds.delete(leadId);
+        if (cardEl) cardEl.classList.remove('selected');
+      } else {
+        this.selectedLeadIds.add(leadId);
+        if (cardEl) cardEl.classList.add('selected');
+      }
+      this.renderBulkActionsBar();
+    } else {
+      LeadModal.show(id);
+    }
+  },
+
+  renderBulkActionsBar() {
+    let bar = document.getElementById('pipeline-bulk-bar');
+    if (this.selectedLeadIds.size === 0) {
+      if (bar) bar.remove();
+      return;
+    }
+
+    if (!bar) {
+      bar = document.createElement('div');
+      bar.id = 'pipeline-bulk-bar';
+      bar.style.position = 'fixed';
+      bar.style.bottom = '24px';
+      bar.style.left = '50%';
+      bar.style.transform = 'translateX(-50%)';
+      bar.style.background = 'var(--bg-secondary)';
+      bar.style.border = '1.5px solid var(--primary)';
+      bar.style.borderRadius = '12px';
+      bar.style.padding = '12px 24px';
+      bar.style.display = 'flex';
+      bar.style.alignItems = 'center';
+      bar.style.gap = '16px';
+      bar.style.boxShadow = '0 10px 30px rgba(0,0,0,0.3)';
+      bar.style.zIndex = '9999';
+      bar.style.animation = 'slideIn 0.3s ease-out';
+      document.body.appendChild(bar);
+    }
+
+    bar.innerHTML = `
+      <span style="font-weight: 600; font-size: 14.5px; color: var(--text-primary);">
+        🟢 ${this.selectedLeadIds.size} ta lead belgilandi
+      </span>
+      <button class="btn btn-primary" onclick="PipelinePage.showBulkMoveModal()" style="font-size: 13px; padding: 8px 16px;">
+        Guruhli bosqichni o'zgartirish
+      </button>
+      <button class="btn btn-secondary" onclick="PipelinePage.clearSelection()" style="font-size: 13px; padding: 8px 16px;">
+        Bekor qilish
+      </button>
+    `;
+  },
+
+  clearSelection() {
+    this.selectedLeadIds.clear();
+    document.querySelectorAll('.kanban-card.selected').forEach(c => c.classList.remove('selected'));
+    this.renderBulkActionsBar();
+  },
+
+  showBulkMoveModal() {
+    const firstStage = 1;
+    const statuses = this.stageStatuses[firstStage];
+    let stageOptions = '';
+    for (let i = 1; i <= 6; i++) {
+      stageOptions += `<option value="${i}">${this.stageTitles[i]}</option>`;
+    }
+    let statusOptions = statuses.map(s => `<option value="${s}">${s}</option>`).join('');
+
+    Modal.show({
+      title: "Guruhli bosqichni o'zgartirish",
+      content: `
+        <div class="form-group" style="margin-bottom: 16px;">
+          <label>Yangi Bosqich</label>
+          <select id="bulk-move-stage" class="form-control" onchange="PipelinePage.handleBulkStageChange(this.value)">
+            ${stageOptions}
+          </select>
+        </div>
+        <div class="form-group" style="margin-bottom: 16px;">
+          <label>Yangi holat</label>
+          <select id="bulk-move-status" class="form-control">
+            ${statusOptions}
+          </select>
+        </div>
+        <div class="form-group" style="margin-bottom: 16px;">
+          <label>Izoh</label>
+          <textarea id="bulk-move-comment" class="form-control" placeholder="Guruhli o'zgartirish uchun izoh..."></textarea>
+        </div>
+      `,
+      footer: `
+        <button class="btn btn-secondary" onclick="Modal.close()">Bekor qilish</button>
+        <button class="btn btn-primary" onclick="PipelinePage.saveBulkMove()">Guruhli saqlash</button>
+      `
+    });
+  },
+
+  handleBulkStageChange(val) {
+    const stage = parseInt(val);
+    const statuses = this.stageStatuses[stage] || [];
+    const select = document.getElementById('bulk-move-status');
+    if (select) {
+      select.innerHTML = statuses.map(s => `<option value="${s}">${s}</option>`).join('');
+    }
+  },
+
+  async saveBulkMove() {
+    const stage = parseInt(document.getElementById('bulk-move-stage').value);
+    const status = document.getElementById('bulk-move-status').value;
+    const comment = document.getElementById('bulk-move-comment').value;
+    const leadIds = Array.from(this.selectedLeadIds);
+
+    try {
+      const res = await API.put('/leads/bulk/stage', { leadIds, stage, status, comment });
+      Toast.success(res.data?.message || "Guruhli holat yangilandi");
+      Modal.close();
+      this.clearSelection();
+      this.loadData();
+    } catch (error) {
+      Toast.error(error.message || "Xatolik yuz berdi");
     }
   }
 };

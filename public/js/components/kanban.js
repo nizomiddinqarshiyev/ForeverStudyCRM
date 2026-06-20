@@ -17,25 +17,53 @@ window.Kanban = class {
 
   render() {
     const getStatusClassificationColor = (status) => {
-      const positive = [
-        "Yangi lead", "Yangi", "Qiziqdi", "Darsga taklif qilindi", "Kelish sanasi belgilandi", 
-        "Tasdiqladi", "Uchrashuvga keldi", "Sinov darsida qatnashdi", "Kurs tanladi", 
-        "Guruhga biriktirildi", "Hujjat topshirdi", "To'lov qildi", "Bo'lib-bo'lib to'laydi", 
-        "Darsga qatnayapti", "Kursni tugatdi"
-      ];
-      const negative = [
-        "Ko'tarmadi", "Noto'g'ri raqam", "Adashib tushgan", "Aloqaga chiqib bo'lmadi", 
-        "Boshqa markazni tanladi", "Mablag'i yetmaydi", "Vaqti yo'q", "Kerak emas", 
-        "Rad etdi", "Kelmadi", "To'lov muddati o'tdi", "To'lov qilmadi", "Kursni tark etdi"
-      ];
-      
-      if (positive.includes(status)) {
-        return '#2ed573'; // Green
-      } else if (negative.includes(status)) {
-        return '#ff4757'; // Red
-      } else {
-        return '#ffa502'; // Yellow/Orange
-      }
+      const colors = {
+        // Eng ijobiy (Yashillar)
+        "To'lov qildi": "#047857",                  // To'q yashil (Forest Green)
+        "Kursni tugatdi": "#065f46",                // To'q zumrad yashil
+        "Darsga qatnayapti": "#10b981",             // Yorqin yashil (Emerald)
+        "Guruhga biriktirildi": "#10b981",          // Yorqin yashil
+        "Hujjat topshirdi": "#34d399",              // Yalpiz yashil (Mint)
+        "Kurs tanladi": "#34d399",                  // Yalpiz yashil
+        "Tasdiqladi": "#059669",                    // Yashil
+        "Kelish sanasi belgilandi": "#10b981",      // Yashil
+        "Sinov darsida qatnashdi": "#6ee7b7",       // Ochiq yashil
+        "Uchrashuvga keldi": "#6ee7b7",             // Ochiq yashil
+        "Darsga taklif qilindi": "#a7f3d0",         // Juda ochiq yashil
+        "Qiziqdi": "#86efac",                       // Ochiq och yashil
+        "Yangi lead": "#60a5fa",                    // Yangi (Moviy)
+        "Yangi": "#60a5fa",
+
+        // Neytrallar (Sariq, Olovrang)
+        "Gaplashildi": "#a3e635",                   // Limon rang (Lime)
+        "Qo'ng'iroq qilindi": "#bef264",            // Ochiq limon rang
+        "Ta'tilda": "#fef08a",                      // Och sariq
+        "O'ylab ko'radi": "#fde047",                // Sariq
+        "Va'da berdi": "#eab308",                   // To'q sariq
+        "Band edi": "#fdba74",                      // Och olovrang
+        "Qayta chaqirish kerak": "#f97316",         // Olovrang (Orange)
+        "Qayta qo'ng'iroq qilish kerak": "#f97316", // Olovrang
+        "Ota-onasi bilan maslahatlashadi": "#f97316",// Olovrang
+        "Keyinroq boshlaydi": "#ea580c",            // To'q olovrang
+        "Davomati past": "#f97316",                 // Olovrang
+        "Ogohlantirildi": "#c2410c",                // Jigar rang / Olovrang
+
+        // Negativlar (Qizillar)
+        "Ko'tarmadi": "#fca5a5",                    // Pushti-qizil
+        "To'lov muddati o'tdi": "#f87171",          // Och qizil
+        "Kelmadi": "#ef4444",                       // Qizil
+        "To'lov qilmadi": "#ef4444",                // Qizil
+        "Mablag'i yetmaydi": "#ef4444",             // Qizil
+        "Vaqti yo'q": "#ef4444",                    // Qizil
+        "Aloqaga chiqib bo'lmadi": "#ef4444",        // Qizil
+        "Boshqa markazni tanladi": "#dc2626",       // To'q qizil (Crimson)
+        "Kursni tark etdi": "#dc2626",              // To'q qizil
+        "Kerak emas": "#991b1b",                    // To'q qizil
+        "Rad etdi": "#7f1d1d",                      // To'q qizil (Burgundy)
+        "Noto'g'ri raqam": "#7f1d1d",               // To'q qizil
+        "Adashib tushgan": "#450a0a"                // Eng to'q negativ (Qora-qizil)
+      };
+      return colors[status] || "#94a3b8"; // standart kulrang
     };
 
     let html = '<div class="kanban-board">';
@@ -114,8 +142,8 @@ window.Kanban = class {
       card.addEventListener('dragend', () => {
         card.classList.remove('dragging');
       });
-      card.addEventListener('click', () => {
-        if (this.options.onCardClick) this.options.onCardClick(card.dataset.id);
+      card.addEventListener('click', (e) => {
+        if (this.options.onCardClick) this.options.onCardClick(card.dataset.id, e);
       });
     });
 

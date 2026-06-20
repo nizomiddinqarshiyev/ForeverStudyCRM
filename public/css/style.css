@@ -262,3 +262,14 @@ body.light-theme .notification-item {
   border-bottom-color: #f1f5f9;
 }
 
+/* Group Selection Styles */
+.kanban-card.selected {
+  outline: 2px solid var(--primary) !important;
+  box-shadow: 0 0 14px rgba(108, 92, 231, 0.45) !important;
+  transform: scale(0.98);
+}
+@keyframes slideInUp {
+  from { transform: translate(-50%, 20px); opacity: 0; }
+  to { transform: translate(-50%, 0); opacity: 1; }
+}
+

@@ -348,6 +348,52 @@ router.put('/:id', verifyToken, (req, res) => {
   }
 });
 
+// PUT /api/leads/bulk/stage
+router.put('/bulk/stage', verifyToken, (req, res) => {
+  try {
+    const { leadIds, stage, status, comment } = req.body;
+    if (!Array.isArray(leadIds) || leadIds.length === 0 || !stage || !status) {
+      return res.status(400).json({ success: false, error: 'Belgilangan leadlar, bosqich va holat majburiy' });
+    }
+
+    const updateLead = db.prepare(`
+      UPDATE leads SET 
+        stage = ?, 
+        status = ?, 
+        updated_at = datetime('now'),
+        last_contact_date = datetime('now')
+      WHERE id = ?
+    `);
+
+    const insertHistory = db.prepare(`
+      INSERT INTO lead_history (lead_id, user_id, old_stage, old_status, new_stage, new_status, action_type, comment)
+      VALUES (?, ?, ?, ?, ?, ?, 'status_change', ?)
+    `);
+
+    const getLead = db.prepare('SELECT stage, status, manager_id FROM leads WHERE id = ?');
+
+    const updateTx = db.transaction((ids, stg, stat, user, comm) => {
+      for (const id of ids) {
+        const oldLead = getLead.get(id);
+        if (!oldLead) continue;
+        
+        if (user.role !== 'admin' && oldLead.stage !== 1 && oldLead.manager_id !== user.id) {
+          throw new Error(`Sizda ba'zi leadlarni o'zgartirish huquqi yo'q (ID: ${id})`);
+        }
+
+        updateLead.run(stg, stat, id);
+        insertHistory.run(id, user.id, oldLead.stage, oldLead.status, stg, stat, comm || '');
+      }
+    });
+
+    updateTx(leadIds, stage, status, req.user, comment);
+
+    res.json({ success: true, message: `${leadIds.length} ta lead muvaffaqiyatli yangilandi.` });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
 // PUT /api/leads/:id/stage
 router.put('/:id/stage', verifyToken, (req, res) => {
   try {
