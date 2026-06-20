@@ -22,21 +22,32 @@ window.PipelinePage = {
   },
 
   async render(container) {
+    let backButton = '';
+    if (this.currentStageView !== 'all') {
+      backButton = `<button class="btn btn-secondary" onclick="PipelinePage.changeView('all')" style="margin-right: 12px; padding: 10px 16px;">◀ Ortga</button>`;
+    }
+
     container.innerHTML = `
       <div class="flex-between mb-4" style="flex-wrap: wrap; gap: 16px;">
         <div class="flex gap-3" style="align-items: center; flex-wrap: wrap;">
           <h2 id="pipeline-title" style="margin: 0;">Sotuv Pipeline</h2>
-          <select id="stage-view-select" class="form-control" style="width: 250px; margin-left: 20px;" onchange="PipelinePage.changeView(this.value)">
-            <option value="all">Barcha bosqichlar (Umumiy)</option>
-            <option value="1">1. Yangi leadlar (Batafsil)</option>
-            <option value="2">2. Gaplashilgan (Batafsil)</option>
-            <option value="3">3. Rozi bo'lganlar (Batafsil)</option>
-            <option value="4">4. Markazga kelganlar (Batafsil)</option>
-            <option value="5">5. To'lov (Batafsil)</option>
-            <option value="6">6. Faol o'quvchi (Batafsil)</option>
-          </select>
+          <div class="flex" style="align-items: center; margin-left: 20px;">
+            ${backButton}
+            <select id="stage-view-select" class="form-control" style="width: 250px;" onchange="PipelinePage.changeView(this.value)">
+              <option value="all">Barcha bosqichlar (Umumiy)</option>
+              <option value="1">1. Yangi leadlar (Batafsil)</option>
+              <option value="2">2. Gaplashilgan (Batafsil)</option>
+              <option value="3">3. Rozi bo'lganlar (Batafsil)</option>
+              <option value="4">4. Markazga kelganlar (Batafsil)</option>
+              <option value="5">5. To'lov (Batafsil)</option>
+              <option value="6">6. Faol o'quvchi (Batafsil)</option>
+            </select>
+          </div>
         </div>
-        <button class="btn btn-secondary" onclick="PipelinePage.loadData()">🔄 Yangilash</button>
+        <div class="flex gap-2">
+          <button class="btn btn-primary" onclick="LeadModal.showAddModal()">+ Yangi Lid</button>
+          <button class="btn btn-secondary" onclick="PipelinePage.loadData()">🔄 Yangilash</button>
+        </div>
       </div>
       <div id="pipeline-board"></div>
     `;
@@ -55,16 +66,14 @@ window.PipelinePage = {
 
   changeView(val) {
     this.currentStageView = val;
-    this.loadData();
+    this.render(document.getElementById('page-content'));
   },
 
   handleColumnClick(columnId) {
     const stageNum = parseInt(columnId);
     if (!isNaN(stageNum) && stageNum >= 1 && stageNum <= 6) {
       this.currentStageView = String(stageNum);
-      const select = document.getElementById('stage-view-select');
-      if (select) select.value = this.currentStageView;
-      this.loadData();
+      this.render(document.getElementById('page-content'));
     }
   },
 

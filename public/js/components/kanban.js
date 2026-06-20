@@ -56,10 +56,9 @@ window.Kanban = class {
             </div>
             <div class="kanban-card-subtitle">${card.subtitle}</div>
             <div class="flex-between" style="align-items: center; gap: 8px;">
-              <span class="badge" style="background:var(--bg-primary);color:var(--text-secondary)">${card.course}</span>
               ${dateStr ? `<span style="font-size:11px;color:var(--text-secondary);display:inline-flex;align-items:center;gap:4px">🕒 ${dateStr}</span>` : ''}
             </div>
-            ${card.next_action ? `<div style="font-size:11px;color:var(--warning);margin-top:8px;font-style:italic">↳ ${card.next_action}</div>` : ''}
+            ${card.next_action ? `<div style="font-size:11px;color:var(--warning);margin-top:4px;font-style:italic">↳ ${card.next_action}</div>` : ''}
           </div>
         `;
       });
