@@ -100,7 +100,8 @@ window.PipelinePage = {
               course: l.course_name || 'Kurs tanlanmagan',
               next_action: l.next_action,
               updated_at: l.updated_at,
-              is_overdue: l.next_contact_date && l.next_contact_date < today
+              is_overdue: l.next_contact_date && l.next_contact_date < today,
+              show_status: true
             }))
           });
         }
@@ -126,7 +127,8 @@ window.PipelinePage = {
               course: l.course_name || 'Kurs tanlanmagan',
               next_action: l.next_action,
               updated_at: l.updated_at,
-              is_overdue: l.next_contact_date && l.next_contact_date < today
+              is_overdue: l.next_contact_date && l.next_contact_date < today,
+              show_course: true
             }))
           };
         });

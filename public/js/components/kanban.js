@@ -48,14 +48,22 @@ window.Kanban = class {
           }
         }
 
+        const statusBadge = card.show_status 
+          ? `<span class="badge badge-stage-${col.id}">${card.status}</span>` 
+          : '';
+        const courseBadge = card.show_course 
+          ? `<span class="badge" style="background:var(--bg-primary);color:var(--text-secondary);font-size:10px;padding:2px 8px;border-radius:10px;">${card.course}</span>` 
+          : '';
+
         html += `
           <div class="kanban-card ${isOverdue}" draggable="true" data-id="${card.id}" data-stage="${col.id}">
             <div class="flex-between mb-1">
               <span class="kanban-card-title">${card.title}</span>
-              <span class="badge badge-stage-${col.id}">${card.status}</span>
+              ${statusBadge}
             </div>
             <div class="kanban-card-subtitle">${card.subtitle}</div>
             <div class="flex-between" style="align-items: center; gap: 8px;">
+              ${courseBadge}
               ${dateStr ? `<span style="font-size:11px;color:var(--text-secondary);display:inline-flex;align-items:center;gap:4px">🕒 ${dateStr}</span>` : ''}
             </div>
             ${card.next_action ? `<div style="font-size:11px;color:var(--warning);margin-top:4px;font-style:italic">↳ ${card.next_action}</div>` : ''}
