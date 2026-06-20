@@ -4,9 +4,14 @@ window.LeadsPage = {
 
   async render(container) {
     container.innerHTML = `
-      <div class="flex-between mb-4">
+      <div class="flex-between mb-4" style="flex-wrap: wrap; gap: 16px;">
         <h2>Lidlar Ro'yxati</h2>
-        <button class="btn btn-primary" onclick="LeadModal.showAddModal()">+ Yangi Lead</button>
+        <div class="flex gap-2" style="flex-wrap: wrap;">
+          <button class="btn btn-secondary" onclick="LeadsPage.triggerImport()">📥 Import (Excel)</button>
+          <button class="btn btn-secondary" onclick="LeadsPage.exportToExcel()">📤 Export (Excel)</button>
+          <button class="btn btn-primary" onclick="LeadModal.showAddModal()">+ Yangi Lead</button>
+          <input type="file" id="excel-import-file" accept=".xlsx, .xls, .csv" style="display:none;" onchange="LeadsPage.handleImport(event)">
+        </div>
       </div>
 
       <div class="filters-bar" id="leads-filters">
@@ -140,5 +145,107 @@ window.LeadsPage = {
       clearTimeout(timeout);
       timeout = setTimeout(later, wait);
     };
+  },
+
+  triggerImport() {
+    document.getElementById('excel-import-file').click();
+  },
+
+  async handleImport(e) {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = async (evt) => {
+      try {
+        const data = new Uint8Array(evt.target.result);
+        const workbook = XLSX.read(data, { type: 'array' });
+        const firstSheetName = workbook.SheetNames[0];
+        const worksheet = workbook.Sheets[firstSheetName];
+        const json = XLSX.utils.sheet_to_json(worksheet);
+
+        if (json.length === 0) {
+          Toast.error("Excel faylda ma'lumotlar topilmadi");
+          return;
+        }
+
+        // Map column headers intelligently
+        const mappedLeads = json.map(row => {
+          const findKey = (keys) => {
+            const match = Object.keys(row).find(k => keys.includes(k.toLowerCase().trim()));
+            return match ? row[match] : null;
+          };
+
+          return {
+            full_name: findKey(['ism', 'f.i.sh', 'fish', 'name', 'full name', 'full_name']),
+            phone: findKey(['telefon', 'tel', 'phone', 'phone number', 'phone_number']),
+            telegram: findKey(['telegram', 'tg', 'user']),
+            source: findKey(['manba', 'source']),
+            age: findKey(['yoshi', 'yosh', 'age']),
+            inquiry_for: findKey(['kim uchun', 'inquiry', 'inquiry_for']),
+            address: findKey(['manzil', 'manzili', 'address']),
+            notes: findKey(['izoh', 'notes', 'note', 'comment'])
+          };
+        });
+
+        // Send to backend bulk endpoint
+        const res = await API.post('/leads/bulk', mappedLeads);
+        Toast.success(res.message || "Import yakunlandi");
+        this.loadLeads();
+      } catch (err) {
+        console.error(err);
+        Toast.error("Faylni o'qishda yoki import qilishda xatolik yuz berdi");
+      }
+    };
+    reader.readAsArrayBuffer(file);
+    e.target.value = ''; // Reset file input
+  },
+
+  async exportToExcel() {
+    try {
+      const res = await API.get('/leads?limit=10000');
+      const leads = res.data || [];
+
+      if (leads.length === 0) {
+        Toast.error("Eksport qilish uchun lidlar mavjud emas");
+        return;
+      }
+
+      const exportData = leads.map(l => ({
+        "Ism (F.I.Sh)": l.full_name,
+        "Telefon": window.formatPhone(l.phone),
+        "Telegram": l.telegram || '',
+        "Manba": l.source || '',
+        "Kurs": l.course_name || '',
+        "Bosqich": `Bosqich ${l.stage}`,
+        "Holat": l.status || '',
+        "Menejer": l.manager_name || '',
+        "Yoshi": l.age || '',
+        "Kim uchun": l.inquiry_for || '',
+        "Manzili": l.address || '',
+        "Izoh": l.notes || '',
+        "Yaratilgan sana": l.created_at ? new Date(l.created_at).toLocaleDateString('uz-UZ') : ''
+      }));
+
+      const worksheet = XLSX.utils.json_to_sheet(exportData);
+      const workbook = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(workbook, worksheet, "Lidlar");
+
+      // Set nice column widths automatically
+      const maxLens = {};
+      exportData.forEach(row => {
+        Object.keys(row).forEach(key => {
+          const val = String(row[key] || '');
+          maxLens[key] = Math.max(maxLens[key] || 10, val.length, key.length);
+        });
+      });
+      worksheet['!cols'] = Object.keys(maxLens).map(key => ({ wch: maxLens[key] + 2 }));
+
+      XLSX.writeFile(workbook, "ForeverStudy_Lidlar.xlsx");
+      Toast.success("Muvaffaqiyatli yuklab olindi");
+    } catch (err) {
+      console.error(err);
+      Toast.error("Eksport qilishda xatolik yuz berdi");
+    }
   }
 };

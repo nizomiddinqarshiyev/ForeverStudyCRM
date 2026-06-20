@@ -472,4 +472,57 @@ router.post('/public', (req, res) => {
   }
 });
 
+// POST /api/leads/bulk (Bulk import from Excel)
+router.post('/bulk', verifyToken, (req, res) => {
+  try {
+    const leads = req.body;
+    if (!Array.isArray(leads) || leads.length === 0) {
+      return res.status(400).json({ success: false, error: "Ma'lumotlar topilmadi" });
+    }
+
+    const insert = db.prepare(`
+      INSERT INTO leads (full_name, phone, telegram, source, course_id, manager_id, notes, next_action, next_contact_date, age, inquiry_for, address)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `);
+
+    const insertHistory = db.prepare(`
+      INSERT INTO lead_history (lead_id, user_id, new_stage, new_status, action_type, comment)
+      VALUES (?, ?, 1, 'Yangi lead', 'status_change', 'Excel orqali import qilindi')
+    `);
+
+    // Run in database transaction for high performance
+    const runTransaction = db.transaction((items) => {
+      let count = 0;
+      for (const lead of items) {
+        if (!lead.full_name || !lead.phone) continue;
+        
+        const result = insert.run(
+          lead.full_name,
+          String(lead.phone),
+          lead.telegram || '',
+          lead.source || 'other',
+          lead.course_id || null,
+          lead.manager_id || req.user.id,
+          lead.notes || '',
+          lead.next_action || '',
+          lead.next_contact_date || '',
+          lead.age ? parseInt(lead.age) : null,
+          lead.inquiry_for || '',
+          lead.address || ''
+        );
+
+        insertHistory.run(result.lastInsertRowid, req.user.id);
+        count++;
+      }
+      return count;
+    });
+
+    const count = runTransaction(leads);
+
+    res.json({ success: true, message: `${count} ta lead muvaffaqiyatli import qilindi` });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
 module.exports = router;
