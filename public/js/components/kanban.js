@@ -16,6 +16,28 @@ window.Kanban = class {
   }
 
   render() {
+    const getStatusClassificationColor = (status) => {
+      const positive = [
+        "Yangi lead", "Yangi", "Qiziqdi", "Darsga taklif qilindi", "Kelish sanasi belgilandi", 
+        "Tasdiqladi", "Uchrashuvga keldi", "Sinov darsida qatnashdi", "Kurs tanladi", 
+        "Guruhga biriktirildi", "Hujjat topshirdi", "To'lov qildi", "Bo'lib-bo'lib to'laydi", 
+        "Darsga qatnayapti", "Kursni tugatdi"
+      ];
+      const negative = [
+        "Ko'tarmadi", "Noto'g'ri raqam", "Adashib tushgan", "Aloqaga chiqib bo'lmadi", 
+        "Boshqa markazni tanladi", "Mablag'i yetmaydi", "Vaqti yo'q", "Kerak emas", 
+        "Rad etdi", "Kelmadi", "To'lov muddati o'tdi", "To'lov qilmadi", "Kursni tark etdi"
+      ];
+      
+      if (positive.includes(status)) {
+        return '#2ed573'; // Green
+      } else if (negative.includes(status)) {
+        return '#ff4757'; // Red
+      } else {
+        return '#ffa502'; // Yellow/Orange
+      }
+    };
+
     let html = '<div class="kanban-board">';
     
     this.options.columns.forEach(col => {
@@ -27,7 +49,7 @@ window.Kanban = class {
             <span class="badge" style="background:var(--bg-card);color:var(--text-secondary)">${col.cards.length}</span>
           </div>
           <div class="kanban-cards">
-      `;
+        `;
       
       col.cards.forEach(card => {
         const isOverdue = card.is_overdue ? 'overdue' : '';
@@ -52,21 +74,21 @@ window.Kanban = class {
           ? `<span class="badge badge-stage-${col.id}">${card.status}</span>` 
           : '';
         const courseBadge = card.show_course 
-          ? `<span class="badge" style="background:var(--bg-primary);color:var(--text-secondary);font-size:10px;padding:2px 8px;border-radius:10px;">${card.course}</span>` 
+          ? `<span class="badge" style="background:var(--bg-primary);color:var(--text-secondary);font-size:10px;padding:2px 8px;border-radius:10px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:110px;" title="${card.course}">${card.course}</span>` 
           : '';
+        const badgeHtml = statusBadge || courseBadge;
+        const borderColor = getStatusClassificationColor(card.status);
 
         html += `
-          <div class="kanban-card ${isOverdue}" draggable="true" data-id="${card.id}" data-stage="${col.id}">
-            <div class="flex-between mb-1">
-              <span class="kanban-card-title">${card.title}</span>
-              ${statusBadge}
+          <div class="kanban-card ${isOverdue}" draggable="true" data-id="${card.id}" data-stage="${col.id}" style="padding: 6px 8px; border-left: 3.5px solid ${borderColor};">
+            <div class="flex-between" style="align-items: center; gap: 8px; margin-bottom: 2px;">
+              <span class="kanban-card-title" style="margin: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 150px;">${card.title}</span>
+              ${badgeHtml}
             </div>
-            <div class="kanban-card-subtitle">${card.subtitle}</div>
-            <div class="flex-between" style="align-items: center; gap: 8px;">
-              ${courseBadge}
-              ${dateStr ? `<span style="font-size:11px;color:var(--text-secondary);display:inline-flex;align-items:center;gap:4px">🕒 ${dateStr}</span>` : ''}
+            <div class="flex-between" style="align-items: center; gap: 8px; font-size: 11.5px; color: var(--text-secondary);">
+              <span class="kanban-card-phone" style="font-size: 11.5px;">${card.subtitle}</span>
+              ${dateStr ? `<span style="font-size:10.5px;display:inline-flex;align-items:center;gap:2px;white-space:nowrap;">🕒 ${dateStr}</span>` : ''}
             </div>
-            ${card.next_action ? `<div style="font-size:11px;color:var(--warning);margin-top:4px;font-style:italic">↳ ${card.next_action}</div>` : ''}
           </div>
         `;
       });
