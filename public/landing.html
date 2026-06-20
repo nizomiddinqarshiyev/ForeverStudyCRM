@@ -469,6 +469,32 @@
       color: var(--text-muted);
       font-size: 14px;
     }
+
+    /* Modal styles */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(15, 23, 42, 0.6);
+      backdrop-filter: blur(8px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+      opacity: 0;
+      visibility: hidden;
+      transition: all 0.3s ease;
+    }
+    .modal-overlay.active {
+      opacity: 1;
+      visibility: visible;
+    }
+    .modal-overlay.active .modal {
+      transform: translateY(0);
+    }
+    .modal {
+      transform: translateY(20px);
+      transition: all 0.3s ease;
+    }
   </style>
 </head>
 <body>
@@ -644,6 +670,29 @@
     <span id="toast-msg">Muvaffaqiyatli ro'yxatdan o'tdingiz!</span>
   </div>
 
+  <div id="successModal" class="modal-overlay">
+    <div class="modal" style="max-width: 480px; text-align: center; padding: 32px; border-radius: var(--radius); background: #ffffff; border: 1px solid var(--border); box-shadow: 0 20px 40px rgba(0,0,0,0.1);">
+      <div style="font-size: 48px; margin-bottom: 16px;">🎉</div>
+      <h3 style="font-family: 'Outfit', sans-serif; font-size: 22px; font-weight: 700; margin-bottom: 12px; color: var(--text);">Ro'yxatdan muvaffaqiyatli o'tdingiz!</h3>
+      <p style="font-size: 15px; color: var(--text-muted); margin-bottom: 24px; line-height: 1.6;">
+        Bizni ko'proq kuzatish, yangiliklar va foydali ma'lumotlardan xabardor bo'lish uchun Telegram kanalimizga obuna bo'ling!
+      </p>
+      
+      <div style="display: flex; flex-direction: column; gap: 12px; margin-bottom: 24px;">
+        <a href="https://t.me/Forever_Study_Consulting" target="_blank" class="btn btn-primary" style="padding: 14px; font-size: 15px; display: flex; align-items: center; justify-content: center; gap: 8px; font-weight: 600;">
+          📢 Telegram Kanalimiz
+        </a>
+        <a href="https://t.me/operator_forever_study" target="_blank" class="btn btn-secondary" style="padding: 14px; font-size: 15px; display: flex; align-items: center; justify-content: center; gap: 8px; font-weight: 600;">
+          💬 Operator bilan bog'lanish
+        </a>
+      </div>
+      
+      <button onclick="closeSuccessModal()" class="btn" style="background: none; border: none; color: var(--text-muted); cursor: pointer; font-size: 14px; text-decoration: underline;">
+        Yopish
+      </button>
+    </div>
+  </div>
+
   <script>
     // Load courses list from public API on load
     document.addEventListener('DOMContentLoaded', async () => {
@@ -725,9 +774,9 @@
         const json = await res.json();
 
         if (json.success) {
-          showToast(json.message || "Ro'yxatdan muvaffaqiyatli o'tdingiz!", true);
           document.getElementById('regForm').reset();
           document.getElementById('phone').value = "+998";
+          showSuccessModal();
         } else {
           showToast(json.error || "Xatolik yuz berdi", false);
         }
@@ -752,6 +801,23 @@
         toast.classList.remove('active');
       }, 4000);
     }
+
+    function showSuccessModal() {
+      const modal = document.getElementById('successModal');
+      modal.classList.add('active');
+    }
+
+    // Close when clicking Yopish or outside the modal card
+    function closeSuccessModal() {
+      const modal = document.getElementById('successModal');
+      modal.classList.remove('active');
+    }
+
+    document.getElementById('successModal').addEventListener('click', function(e) {
+      if (e.target === this) {
+        closeSuccessModal();
+      }
+    });
   </script>
 </body>
 </html>
